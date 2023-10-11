@@ -3,14 +3,15 @@ name: CI macOS
 on:
   workflow_call:
 
+env:
+  CC: clang
+  VFLAGS: -cc clang
+  PKG_CONFIG_PATH: /usr/local/opt/pkgconfig:/usr/local/opt/libpq/lib/pkgconfig:/usr/local/opt/openssl@3/lib/pkgconfig:/opt/homebrew/lib/pkgconfig:/opt/homebrew/opt/libpq/lib/pkgconfig:/opt/homebrew/opt/openssl@3/lib/pkgconfig
+
 jobs:
-  clang:
-    runs-on: macOS-12
+  build:
+    runs-on: macos-12
     if: github.event_name != 'push' || github.event.ref == 'refs/heads/master' || github.event.repository.full_name != 'vlang/v'
-    timeout-minutes: 121
-    env:
-      VFLAGS: -cc clang
-      PKG_CONFIG_PATH: /usr/local/opt/pkgconfig:/usr/local/opt/libpq/lib/pkgconfig:/usr/local/opt/openssl@3/lib/pkgconfig:/opt/homebrew/lib/pkgconfig:/opt/homebrew/opt/libpq/lib/pkgconfig:/opt/homebrew/opt/openssl@3/lib/pkgconfig
     steps:
       - uses: actions/checkout@v3
       - name: Install dependencies
@@ -20,7 +21,7 @@ jobs:
           export LIBRARY_PATH="$LIBRARY_PATH:/usr/local/opt/openssl/lib/"
           echo "LIBRARY_PATH is '$LIBRARY_PATH'"
       - name: Build V
-        run: make -j4 && ./v -cg -cstrict -o v cmd/v
+        run: make -j4 && ./v -showcc -cg -cstrict -o v cmd/v
       - name: Run sanitizers
         run: |
           ./v -o v2 cmd/v -cflags -fsanitize=undefined
@@ -43,6 +44,23 @@ jobs:
       #   run: ./v build-vbinaries
       # - name: Test v->js
       #   run: ./v -o hi.js examples/hello_v_js.v && node hi.js
+      - name: Cache
+        uses: actions/cache/save@v3
+        with:
+          path: ./
+          key: ${{ runner.os }}-${{ env.CC }}-${{ github.sha }}
+
+  verify:
+    needs: build
+    runs-on: macos-12
+    if: github.event_name != 'push' || github.event.ref == 'refs/heads/master' || github.event.repository.full_name != 'vlang/v'
+    steps:
+      - name: Restore cache
+        uses: actions/cache/restore@v3
+        with:
+          path: ./
+          key: ${{ runner.os }}-${{ env.CC }}-${{ github.sha }}
+          fail-on-cache-miss: true
       - name: Verify `v test` works
         run: |
           echo $VFLAGS
@@ -52,8 +70,32 @@ jobs:
         run: VJOBS=1 ./v test-cleancode
       - name: Test pure V math module
         run: ./v -exclude @vlib/math/*.c.v test vlib/math/
+
+  test:
+    needs: verify
+    runs-on: macos-12
+    if: github.event_name != 'push' || github.event.ref == 'refs/heads/master' || github.event.repository.full_name != 'vlang/v'
+    steps:
+      - name: Restore cache
+        uses: actions/cache/restore@v3
+        with:
+          path: ./
+          key: ${{ runner.os }}-${{ env.CC }}-${{ github.sha }}
+          fail-on-cache-miss: true
       - name: Self tests
         run: VJOBS=1 ./v test-self
+
+  build-modules-examples:
+    needs: verify
+    runs-on: macos-12
+    if: github.event_name != 'push' || github.event.ref == 'refs/heads/master' || github.event.repository.full_name != 'vlang/v'
+    steps:
+      - name: Restore cache
+        uses: actions/cache/restore@v3
+        with:
+          path: ./
+          key: ${{ runner.os }}-${{ env.CC }}-${{ github.sha }}
+          fail-on-cache-miss: true
       - name: Build examples
         run: ./v build-examples
       - name: Build tetris with -autofree
@@ -81,7 +123,8 @@ jobs:
           ln -s $(pwd) ~/.vmodules/ui
           ../v examples/rectangles.v
           ../v examples/users.v
-          ## ../v run examples/build_examples.vsh
+        # TODO: test if building UI examples works
+        # ../v run examples/build_examples.vsh
       - name: V self compilation with -usecache
         run: |
           unset VFLAGS
@@ -90,10 +133,19 @@ jobs:
           ./v2 -o v3 -usecache cmd/v
           ./v3 version
           ./v3 -o tetris  -usecache examples/tetris/tetris.v
+      # TODO: separate job to compile variants
       - name: V self compilation with -parallel-cc
-        run: |
-          ./v -o v2 -parallel-cc cmd/v
+        run: ./v -o v2 -parallel-cc cmd/v
       - name: Test password input
         run: ./v test examples/password/
       - name: Test readline
         run: ./v test examples/readline/
+
+  # NOTE:
+  # santize for more paths
+  # examples on mac
+  # sanitized msvc
+  # below 1h instead of 2h+
+  # cstrict test with tcc
+  # # TODO: sanitzed gcc instead of tcc test if it works with gcc and linking
+  # VFLAGS: -cc tcc

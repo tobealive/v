@@ -12,7 +12,7 @@ jobs:
     steps:
       - uses: actions/checkout@v3
       - name: Build V
-        run: make
+        run: make -j4
       - name: Build module documentation
         run: ./v doc -m -f html vlib/
       - name: Deploy docs to vercel

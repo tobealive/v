@@ -1,11 +1,11 @@
-name: CI Linux (Clang)
+name: CI Linux (GCC)
 
 on:
   workflow_call:
 
 env:
-  CC: clang
-  VFLAGS: -cc clang
+  CC: gcc
+  VFLAGS: -cc gcc
 
 jobs:
   build:
@@ -20,21 +20,32 @@ jobs:
           version: 1.0
       - name: Build V
         run: make -j4 && ./v -showcc -cg -cstrict -o v cmd/v
-      - name: Valgrind
+      - name: Valgrind v.c
         run: valgrind --error-exitcode=1 ./v -o v.c cmd/v
       - name: Run sanitizers
+        env:
+          # TODO: test if it works with gcc and linking
+          VFLAGS: -cc tcc
         run: |
-          ./v -o v2 cmd/v -cflags -fsanitize=memory
-          ./v -o v3 cmd/v -cflags -fsanitize=thread
-          ./v -o v4 cmd/v -cflags -fsanitize=undefined
-          ./v -o v5 cmd/v -cflags -fsanitize=address,pointer-compare,pointer-subtract
+          ./v -o v2 cmd/v -cflags -fsanitize=thread
+          ./v -o v3 cmd/v -cflags "-fsanitize=undefined -fno-sanitize=alignment"
           UBSAN_OPTIONS=print_stacktrace=1:halt_on_error=1 ./v2 -o v.c cmd/v
           UBSAN_OPTIONS=print_stacktrace=1:halt_on_error=1 ./v3 -o v.c cmd/v
-          UBSAN_OPTIONS=print_stacktrace=1:halt_on_error=1 ./v4 -o v.c cmd/v
-          ASAN_OPTIONS=detect_leaks=0 UBSAN_OPTIONS=print_stacktrace=1:halt_on_error=1 ./v5 -o v.c cmd/v
-      - name: v self compilation
+      # - name: Test V
+      #   run: ./v test-all
+      # - name: Test v binaries
+      #   run: ./v build-vbinaries
+      # - name: Test v->js
+      #   run: ./v -o hi.js examples/hello_v_js.v && node hi.js
+      # - name: Build Vorum
+      #   run: git clone --depth 1 https://github.com/vlang/vorum && cd vorum && ../v . && cd ..
+      - name: Build vpm
+        run: ./v install markdown && git clone --depth 1 https://github.com/vlang/vpm && cd vpm && ../v . || ../v cmd/vpm && cd ..
+      - name: Freestanding
+        run: ./v -freestanding run vlib/os/bare/bare_example_linux.v
+      - name: V self compilation
         run: ./v -o v2 cmd/v && ./v2 -o v3 cmd/v && ./v3 -o v4 cmd/v
-      - name: v self compilation with -usecache
+      - name: V self compilation with -usecache
         run: |
           unset VFLAGS
           ./v -usecache examples/hello_world.v && examples/hello_world
@@ -42,7 +53,6 @@ jobs:
           ./v2 -o v3     -usecache cmd/v
           ./v3 version
           ./v3 -o tetris -usecache examples/tetris/tetris.v
-          VFLAGS="-cc clang"
       - name: Cache
         uses: actions/cache/save@v3
         with:
@@ -53,8 +63,6 @@ jobs:
     needs: build
     runs-on: ubuntu-20.04
     if: github.event_name != 'push' || github.event.ref == 'refs/heads/master' || github.event.repository.full_name != 'vlang/v'
-    env:
-      VFLAGS: -cc clang
     steps:
       - name: Restore cache
         uses: actions/cache/restore@v3
@@ -80,6 +88,9 @@ jobs:
     strategy:
       matrix:
         optimization: ['', '-prod', '-cstrict']
+        include:
+          - optimization: '-cstrict'
+            env: 'VTEST_JUST_ESSENTIAL=1 V_CI_CSTRICT=1'
       fail-fast: false
     steps:
       - name: Restore cache
@@ -95,14 +106,12 @@ jobs:
           version: 1.0
       - name: Self Test
         run: |
+          # TODO: group if works
           if [ "${{ matrix.optimization }}" == "-prod" ]; then
             ./v -o vprod -prod cmd/v
             ./vprod test-self
-          elif [ "${{ matrix.optimization }}" == "-cstrict" ]; then
-            ./v -o vprod -prod cmd/v
-            VTEST_JUST_ESSENTIAL=1 V_CI_CSTRICT=1 ./vprod -cstrict test-self
           else
-            ./v test-self
+            ${{ matrix.env }} ./v ${{ matrix.optimization }} test-self
           fi
 
   build-modules-examples:
@@ -123,8 +132,14 @@ jobs:
           version: 1.0
       - name: Build examples
         run: ./v build-examples
-      - name: Build examples with -autofree
-        run: ./v -autofree -experimental -o tetris examples/tetris/tetris.v
+      - name: Build tetris with -autofree
+        run: ./v -autofree -o tetris examples/tetris/tetris.v
+      - name: Build blog tutorial with -autofree
+        run: ./v -autofree -o blog tutorials/building_a_simple_web_blog_with_vweb/code/blog
+      - name: Build option_test.v with -autofree
+        run: ./v -autofree vlib/v/tests/option_test.v
+      - name: V self compilation with -parallel-cc
+        run: ./v -o v2 -parallel-cc cmd/v
       - name: Build modules
         run: |
           ./v build-module vlib/os
@@ -151,42 +166,49 @@ jobs:
           echo "Building it..."
           ../../vprod -backend native -o 1m 1m.v
           echo "Running it..."
+          # TODO: test if running it works
           # ./1m
           ls
+      - name: compile vdoctor.v with -skip-unused and -prod
+        run: ./v -showcc -skip-unused -prod cmd/tools/vdoctor.v
+      - name: compile vup.v with -skip-unused and -prod
+        run: ./v -showcc -skip-unused -prod cmd/tools/vup.v
+
+      # - run: cd examples/native && ../../v -native hello_world.v && ./hello_world
+      # - name: Coveralls GitHub Action
+      #   uses: coverallsapp/github-action@v1.0.1
+      #   with:
+      #     github-token: ${{ secrets.GITHUB_TOKEN }}
 
   san-test:
     needs: verify
     runs-on: ubuntu-20.04
     timeout-minutes: 90
     if: github.event_name != 'push' || github.event.ref == 'refs/heads/master' || github.event.repository.full_name != 'vlang/v'
-    strategy:
-      matrix:
-        sanitizer: ['undefined', 'memory', 'address']
-      fail-fast: false
     env:
       VTEST_SHOW_START: 1
       VJOBS: 1
+    strategy:
+      matrix:
+        sanitizer: ['undefined', 'address']
+      fail-fast: false
     steps:
       - name: Restore cache
         uses: actions/cache/restore@v3
         with:
           path: ./
           key: ${{ runner.os }}-${{ env.CC }}-${{ github.sha }}
-          fail-on-cache-miss: true
       - name: Setup Dependencies
         uses: awalsh128/cache-apt-pkgs-action@latest
         with:
           packages: postgresql libpq-dev libssl-dev sqlite3 libsqlite3-dev valgrind libfreetype6-dev libxi-dev libxcursor-dev libgl-dev
           version: 1.0
-      # TODO: compare with current if maybe building V again is neccesayr
       - name: Build V # Use a V binary that was compiled with a sanitizer to run self tests.
         run: ./v -cflags -fsanitize=${{ matrix.sanitizer }} -o v2 cmd/v
-      - name: Self Test
+      - name: Self tests
         run: |
           if [ "${{ matrix.sanitizer }}" == "address" ]; then
             ASAN_OPTIONS=detect_leaks=0 ./v2 -cc tcc test-self -asan-compiler
-          elif [ "${{ matrix.sanitizer }}" == "memory" ]; then
-            ./v2 -cc tcc test-self -msan-compiler
           else
             ./v2 -cflags -fsanitize=${{ matrix.sanitizer }} test-self
           fi
@@ -197,7 +219,7 @@ jobs:
     if: github.event_name != 'push' || github.event.ref == 'refs/heads/master' || github.event.repository.full_name != 'vlang/v'
     strategy:
       matrix:
-        sanitizer: ['undefined', 'memory', 'address']
+        sanitizer: ['undefined', 'address']
         include:
           - optimization: 'address'
             env: 'ASAN_OPTIONS=detect_leaks=0'
@@ -217,3 +239,63 @@ jobs:
         run: ./v -cflags -fsanitize=${{ matrix.sanitizer }} -o v cmd/v
       - name: Build Examples
         run: ${{ matrix.env }} ./v build-examples
+
+  # TODO: remove comment
+  # tests-sanitize-address-gcc:
+  #   runs-on: ubuntu-20.04
+  #   if: github.event_name != 'push' || github.event.ref == 'refs/heads/master' || github.event.repository.full_name != 'vlang/v'
+  #   timeout-minutes: 240
+  #     VJOBS: 1
+  #     VTEST_SHOW_START: 1
+  #   steps:
+  #     - uses: actions/checkout@v3
+  #     - name: Install dependencies
+  #       run: |
+  #         sudo apt update
+  #         sudo apt-get install --quiet -y postgresql libpq-dev libssl-dev sqlite3 libsqlite3-dev valgrind
+  #         sudo apt-get install --quiet -y libfreetype6-dev  libxi-dev libxcursor-dev libgl-dev
+  #         sudo apt-get install clang
+  #     - name: Build V
+  #       run: make -j4 && ./v -cg -cstrict -o v cmd/v
+  #     - name: Self tests (-fsanitize=address)
+  #       run: ASAN_OPTIONS=detect_leaks=0 ./v -cflags -fsanitize=address test-self
+  #     - name: Self tests (V compiled with -fsanitize=address)
+  #       run:
+  #         ./v -cflags -fsanitize=address,pointer-compare,pointer-subtract -o v cmd/v &&
+  #         ASAN_OPTIONS=detect_leaks=0 ./v -cc tcc test-self -asan-compiler
+  #     - name: Build examples (V compiled with -fsanitize=address)
+  #       run: ASAN_OPTIONS=detect_leaks=0 ./v build-examples
+
+  # autofree-selfcompile:
+  #   runs-on: ubuntu-20.04
+  #   if: github.event_name != 'push' || github.event.ref == 'refs/heads/master' || github.event.repository.full_name != 'vlang/v'
+  #   timeout-minutes: 121
+  #   steps:
+  #   - uses: actions/checkout@v3
+  #   - name: Build V
+  #     run: make -j4
+  #   - name: V self compilation with -autofree
+  #     run: ./v -o v2 -autofree cmd/v && ./v2 -o v3 -autofree cmd/v && ./v3 -o v4 -autofree cmd/v
+
+  # musl:
+  #   runs-on: ubuntu-20.04
+  #   if: github.event_name != 'push' || github.event.ref == 'refs/heads/master' || github.event.repository.full_name != 'vlang/v'
+  #   timeout-minutes: 121
+  #   env:
+  #     VFLAGS: -cc musl-gcc
+  #     V_CI_MUSL: 1
+  #   steps:
+  #   - uses: actions/checkout@v3
+  #   - name: Install dependencies
+  #     run: |
+  #        sudo apt-get install --quiet -y musl musl-tools libssl-dev sqlite3 libsqlite3-dev valgrind
+  #   - name: Build V
+  #     run: echo $VFLAGS && make -j4 && ./v -cg -o v cmd/v
+  #   # - name: Test v binaries
+  #   #   run: ./v build-vbinaries
+  #   # - name: Test v->js
+  #   #   run: ./v -o hi.js examples/hello_v_js.v && node hi.js
+  #   - name: quick debug
+  #     run: ./v -stats vlib/strconv/format_test.v
+  #   - name: Self tests
+  #     run: ./v test-self

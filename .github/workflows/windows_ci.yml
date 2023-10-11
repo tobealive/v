@@ -195,3 +195,28 @@ jobs:
       #   run: ./v build-examples
       # - name: v2 self compilation
       #   run: .\v.exe -o v2.exe cmd/v && .\v2.exe -o v3.exe cmd/v
+
+  tests-sanitize-address-msvc:
+    runs-on: windows-2019
+    if: github.event_name != 'push' || github.event.ref == 'refs/heads/master' || github.event.repository.full_name != 'vlang/v'
+    timeout-minutes: 240
+    env:
+      VFLAGS: -cc msvc
+      VJOBS: 1
+      VTEST_SHOW_START: 1
+    steps:
+      - uses: actions/checkout@v3
+      - name: Build
+        run: |
+          echo %VFLAGS%
+          echo $VFLAGS
+          .\make.bat -msvc
+          .\v.exe self
+
+      # - name: Install dependencies
+      #   run: |
+      #     .\v.exe setup-freetype
+      #     .\.github\workflows\windows-install-sqlite.bat
+      # - name: Self tests (TODO: /fsanitize=address)
+      #   run: |
+      #     .\v.exe -cflags "/fsanitize=address" test-self

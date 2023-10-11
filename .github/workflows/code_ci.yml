@@ -23,8 +23,14 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  linux:
-    uses: ./.github/workflows/linux_ci.yml
+  linux-tcc:
+    uses: ./.github/workflows/linux_tcc_ci.yml
+
+  linux-gcc:
+    uses: ./.github/workflows/linux_gcc_ci.yml
+
+  linux-clang:
+    uses: ./.github/workflows/linux_clang_ci.yml
 
   macos:
     uses: ./.github/workflows/macos_ci.yml
