@@ -1,0 +1,165 @@
+name: CI Linux (Clang)
+
+on:
+  workflow_call:
+
+jobs:
+  setup:
+    runs-on: ubuntu-20.04
+    if: github.event_name != 'push' || github.event.ref == 'refs/heads/master' || github.event.repository.full_name != 'vlang/v'
+    timeout-minutes: 121
+    env:
+      VFLAGS: -cc clang
+    steps:
+      - uses: actions/checkout@v3
+      - name: Install dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install --quiet -y postgresql libpq-dev libssl-dev sqlite3 libsqlite3-dev valgrind
+          sudo apt-get install --quiet -y libfreetype6-dev  libxi-dev libxcursor-dev libgl-dev
+          sudo apt-get install --quiet -y clang
+      - name: Build V
+        run: make -j4 && ./v -cc clang -cg -cstrict -o v cmd/v
+      - name: Valgrind
+        run: valgrind --error-exitcode=1 ./v -o v.c cmd/v
+      - name: Run sanitizers
+        run: |
+          ./v -o v2 cmd/v -cflags -fsanitize=memory
+          ./v -o v3 cmd/v -cflags -fsanitize=thread
+          ./v -o v4 cmd/v -cflags -fsanitize=undefined
+          ./v -o v5 cmd/v -cflags -fsanitize=address,pointer-compare,pointer-subtract
+          UBSAN_OPTIONS=print_stacktrace=1:halt_on_error=1 ./v2 -o v.c cmd/v
+          UBSAN_OPTIONS=print_stacktrace=1:halt_on_error=1 ./v3 -o v.c cmd/v
+          UBSAN_OPTIONS=print_stacktrace=1:halt_on_error=1 ./v4 -o v.c cmd/v
+          ASAN_OPTIONS=detect_leaks=0 UBSAN_OPTIONS=print_stacktrace=1:halt_on_error=1 ./v5 -o v.c cmd/v
+      - name: v self compilation
+        run: ./v -o v2 cmd/v && ./v2 -o v3 cmd/v && ./v3 -o v4 cmd/v
+      - name: v self compilation with -usecache
+        run: |
+          unset VFLAGS
+          ./v -usecache examples/hello_world.v && examples/hello_world
+          ./v  -o v2     -usecache cmd/v
+          ./v2 -o v3     -usecache cmd/v
+          ./v3 version
+          ./v3 -o tetris -usecache examples/tetris/tetris.v
+      - name: Verify `v test` works
+        run: |
+          echo $VFLAGS
+          ./v cmd/tools/test_if_v_test_system_works.v
+          ./cmd/tools/test_if_v_test_system_works
+      - name: All code is formatted
+        run: ./v test-cleancode
+      - name: Test pure V math module
+        run: ./v -exclude @vlib/math/*.c.v test vlib/math/
+      - name: Cache
+        uses: actions/cache/save@v3
+        with:
+          path: ./
+          key: ${{ runner.os }}-clang-${{ github.sha }}
+
+  # TODO: matrix for self tests
+  self-test:
+    needs: setup
+    runs-on: ubuntu-20.04
+    if: github.event_name != 'push' || github.event.ref == 'refs/heads/master' || github.event.repository.full_name != 'vlang/v'
+    timeout-minutes: 121
+    env:
+      VFLAGS: -cc clang
+    steps:
+      - name: Restore Cache
+        uses: actions/cache/restore@v3
+        with:
+          path: ./
+          key: ${{ runner.os }}-${{ github.sha }}
+          fail-on-cache-miss: true
+      - name: Self tests
+        run: ./v test-self
+      # - name: Self tests (vprod)
+      #   run: |
+      #     ./v -o vprod -prod cmd/v
+      #     ./vprod test-self
+      # - name: Self tests (-cstrict)
+      #   run: VTEST_JUST_ESSENTIAL=1 V_CI_CSTRICT=1 ./vprod -cstrict test-self
+
+  test-prod:
+    needs: setup
+    runs-on: ubuntu-20.04
+    if: github.event_name != 'push' || github.event.ref == 'refs/heads/master' || github.event.repository.full_name != 'vlang/v'
+    timeout-minutes: 121
+    env:
+      VFLAGS: -cc clang
+    steps:
+      - name: Restore Cache
+        uses: actions/cache/restore@v3
+        with:
+          path: ./
+          key: ${{ runner.os }}-${{ github.sha }}
+          fail-on-cache-miss: true
+      - name: Self tests (vprod)
+        run: |
+          ./v -o vprod -prod cmd/v
+          ./vprod test-self
+
+  test-strict:
+    needs: setup
+    runs-on: ubuntu-20.04
+    if: github.event_name != 'push' || github.event.ref == 'refs/heads/master' || github.event.repository.full_name != 'vlang/v'
+    timeout-minutes: 121
+    env:
+      VFLAGS: -cc clang
+    steps:
+      - name: Restore Cache
+        uses: actions/cache/restore@v3
+        with:
+          path: ./
+          key: ${{ runner.os }}-${{ github.sha }}
+          fail-on-cache-miss: true
+      - name: Self tests (-cstrict)
+        run: VTEST_JUST_ESSENTIAL=1 V_CI_CSTRICT=1 ./vprod -cstrict test-self
+
+  examples-modules:
+    needs: setup
+    runs-on: ubuntu-20.04
+    if: github.event_name != 'push' || github.event.ref == 'refs/heads/master' || github.event.repository.full_name != 'vlang/v'
+    timeout-minutes: 121
+    env:
+      VFLAGS: -cc clang
+    steps:
+      - name: Restore Cache
+        uses: actions/cache/restore@v3
+        with:
+          path: ./
+          key: ${{ runner.os }}-${{ github.sha }}
+          fail-on-cache-miss: true
+      - name: Build examples
+        run: ./v build-examples
+      - name: Build examples with -autofree
+        run: |
+          ./v -autofree -experimental -o tetris examples/tetris/tetris.v
+      - name: Build modules
+        run: |
+          ./v build-module vlib/os
+          ./v build-module vlib/builtin
+          ./v build-module vlib/strconv
+          ./v build-module vlib/time
+          ./v build-module vlib/term
+          ./v build-module vlib/math
+          ./v build-module vlib/strings
+          ./v build-module vlib/v/token
+          ./v build-module vlib/v/ast
+          ./v build-module vlib/v/parser
+          ./v build-module vlib/v/gen/c
+          ./v build-module vlib/v/depgraph
+          ./v build-module vlib/os/cmdline
+      - name: native machine code generation
+        run: |
+          exit
+          ./v -o vprod -prod cmd/v
+          cd cmd/tools
+          echo "Generating a 1m line V file..."
+          ../../vprod gen1m.v
+          ./gen1m > 1m.v
+          echo "Building it..."
+          ../../vprod -backend native -o 1m 1m.v
+          echo "Running it..."
+          ls
