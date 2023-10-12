@@ -1,0 +1,123 @@
+name: CI Windows (MSVC)
+
+on:
+  workflow_call:
+
+env:
+  VFLAGS: -cc msvc
+  VERBOSE_MAKE: 1
+  CACHE_ID: windows-msvc-${{ github.sha }}
+
+jobs:
+  build:
+    runs-on: windows-2019
+    if: github.event_name != 'push' || github.event.ref == 'refs/heads/master' || github.event.repository.full_name != 'vlang/v'
+    timeout-minutes: 180
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build
+        run: |
+          echo %VFLAGS%
+          echo $VFLAGS
+          ./make.bat -msvc
+          ./v -cflags /WX self
+      - name: Install dependencies
+        run: |
+          ./v setup-freetype
+          ./.github/workflows/windows-install-sqlite.bat
+      - name: V doctor
+        run: ./v doctor
+      - name: Cache
+        uses: actions/cache/save@v3
+        with:
+          path: ./
+          key: ${{ env.CACHE_ID }}
+
+  verify:
+    needs: build
+    runs-on: windows-2019
+    steps:
+      - name: Restore cache
+        uses: actions/cache/restore@v3
+        with:
+          path: ./
+          key: ${{ env.CACHE_ID }}
+          fail-on-cache-miss: true
+      - name: Verify `v test` works
+        run: |
+          echo $VFLAGS
+          ./v cmd/tools/test_if_v_test_system_works.v
+          ./cmd/tools/test_if_v_test_system_works
+      - name: Self compile
+        run: ./v -o v2.exe cmd/v && ./v2 -o v3.exe cmd/v
+      - name: Test pure V math module
+        run: ./v -exclude @vlib/math/*.c.v test vlib/math/
+
+  fmt:
+    needs: build
+    runs-on: windows-2019
+    steps:
+      - name: Restore cache
+        uses: actions/cache/restore@v3
+        with:
+          path: ./
+          key: ${{ env.CACHE_ID }}
+          fail-on-cache-miss: true
+      - name: Test cleancode
+        run: ./v test-cleancode
+
+  test:
+    needs: [verify, fmt]
+    runs-on: windows-2019
+    steps:
+      - name: Restore cache
+        uses: actions/cache/restore@v3
+        with:
+          path: ./
+          key: ${{ env.CACHE_ID }}
+          fail-on-cache-miss: true
+      - name: Self tests
+        run: |
+          ./v -cg cmd\tools\vtest-self.v
+          ./v test-self
+      # - name: Test
+      #   run: .\v.exe test-all
+
+  build-modules:
+    needs: [verify, fmt]
+    runs-on: windows-2019
+    steps:
+      - name: Restore cache
+        uses: actions/cache/restore@v3
+        with:
+          path: ./
+          key: ${{ env.CACHE_ID }}
+          fail-on-cache-miss: true
+      - name: Test v->js
+        run: ./v -o hi.js examples/hello_v_js.v && node hi.js
+      - name: Test v binaries
+        run: ./v build-vbinaries
+      - name: Build examples
+        run: ./v build-examples
+
+  tests-sanitize-address-msvc:
+    runs-on: windows-2019
+    timeout-minutes: 240
+    env:
+      VFLAGS: -cc msvc
+      VJOBS: 1
+      VTEST_SHOW_START: 1
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build
+        run: |
+          echo %VFLAGS%
+          echo $VFLAGS
+          ./make.bat -msvc
+          ./v self
+      - name: Install dependencies
+        run: |
+          ./v setup-freetype
+          ./.github/workflows/windows-install-sqlite.bat
+      - name: Self tests # TODO: /fsanitize=address
+        run: ./v -cflags /fsanitize=address test-self

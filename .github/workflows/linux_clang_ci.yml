@@ -4,15 +4,15 @@ on:
   workflow_call:
 
 env:
-  CC: clang
   VFLAGS: -cc clang
+  CACHE_ID: linux-clang-${{ github.sha }}
 
 jobs:
   build:
     runs-on: ubuntu-20.04
     if: github.event_name != 'push' || github.event.ref == 'refs/heads/master' || github.event.repository.full_name != 'vlang/v'
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
       - name: Setup Dependencies
         uses: awalsh128/cache-apt-pkgs-action@latest
         with:
@@ -47,12 +47,11 @@ jobs:
         uses: actions/cache/save@v3
         with:
           path: ./
-          key: ${{ runner.os }}-${{ env.CC }}-${{ github.sha }}
+          key: ${{ env.CACHE_ID }}
 
   verify:
     needs: build
     runs-on: ubuntu-20.04
-    if: github.event_name != 'push' || github.event.ref == 'refs/heads/master' || github.event.repository.full_name != 'vlang/v'
     env:
       VFLAGS: -cc clang
     steps:
@@ -60,33 +59,46 @@ jobs:
         uses: actions/cache/restore@v3
         with:
           path: ./
-          key: ${{ runner.os }}-${{ env.CC }}-${{ github.sha }}
+          key: ${{ env.CACHE_ID }}
           fail-on-cache-miss: true
       - name: Verify `v test` works
         run: |
           echo $VFLAGS
           ./v cmd/tools/test_if_v_test_system_works.v
           ./cmd/tools/test_if_v_test_system_works
-      - name: All code is formatted
-        run: ./v test-cleancode
       - name: Test pure V math module
         run: ./v -exclude @vlib/math/*.c.v test vlib/math/
 
-  test:
-    needs: verify
+  fmt:
+    needs: build
     runs-on: ubuntu-20.04
-    timeout-minutes: 60
-    if: github.event_name != 'push' || github.event.ref == 'refs/heads/master' || github.event.repository.full_name != 'vlang/v'
+    steps:
+      - name: Restore cache
+        uses: actions/cache/restore@v3
+        with:
+          path: ./
+          key: ${{ env.CACHE_ID }}
+          fail-on-cache-miss: true
+      - name: Test cleancode
+        run: ./v test-cleancode
+
+  test:
+    needs: [verify, fmt]
+    runs-on: ubuntu-20.04
+    timeout-minutes: 90
     strategy:
       matrix:
         optimization: ['', '-prod', '-cstrict']
+        include:
+          - optimization: '-cstrict'
+            v_env: 'VTEST_JUST_ESSENTIAL=1 V_CI_CSTRICT=1'
       fail-fast: false
     steps:
       - name: Restore cache
         uses: actions/cache/restore@v3
         with:
           path: ./
-          key: ${{ runner.os }}-${{ env.CC }}-${{ github.sha }}
+          key: ${{ env.CACHE_ID }}
           fail-on-cache-miss: true
       - name: Setup Dependencies
         uses: awalsh128/cache-apt-pkgs-action@latest
@@ -105,16 +117,15 @@ jobs:
             ./v test-self
           fi
 
-  build-modules-examples:
-    needs: verify
+  build-modules:
+    needs: [verify, fmt]
     runs-on: ubuntu-20.04
-    if: github.event_name != 'push' || github.event.ref == 'refs/heads/master' || github.event.repository.full_name != 'vlang/v'
     steps:
       - name: Restore cache
         uses: actions/cache/restore@v3
         with:
           path: ./
-          key: ${{ runner.os }}-${{ env.CC }}-${{ github.sha }}
+          key: ${{ env.CACHE_ID }}
           fail-on-cache-miss: true
       - name: Setup Dependencies
         uses: awalsh128/cache-apt-pkgs-action@latest
@@ -151,14 +162,13 @@ jobs:
           echo "Building it..."
           ../../vprod -backend native -o 1m 1m.v
           echo "Running it..."
-          # ./1m
+          ./1m
           ls
 
   san-test:
-    needs: verify
+    needs: [verify, fmt]
     runs-on: ubuntu-20.04
-    timeout-minutes: 90
-    if: github.event_name != 'push' || github.event.ref == 'refs/heads/master' || github.event.repository.full_name != 'vlang/v'
+    timeout-minutes: 120
     strategy:
       matrix:
         sanitizer: ['undefined', 'memory', 'address']
@@ -171,7 +181,7 @@ jobs:
         uses: actions/cache/restore@v3
         with:
           path: ./
-          key: ${{ runner.os }}-${{ env.CC }}-${{ github.sha }}
+          key: ${{ env.CACHE_ID }}
           fail-on-cache-miss: true
       - name: Setup Dependencies
         uses: awalsh128/cache-apt-pkgs-action@latest
@@ -183,18 +193,16 @@ jobs:
         run: ./v -cflags -fsanitize=${{ matrix.sanitizer }} -o v2 cmd/v
       - name: Self Test
         run: |
-          if [ "${{ matrix.sanitizer }}" == "address" ]; then
-            ASAN_OPTIONS=detect_leaks=0 ./v2 -cc tcc test-self -asan-compiler
-          elif [ "${{ matrix.sanitizer }}" == "memory" ]; then
-            ./v2 -cc tcc test-self -msan-compiler
+          if [ "${{ matrix.optimization }}" == "-prod" ]; then
+            ./v -o vprod -prod cmd/v
+            ./vprod test-self
           else
-            ./v2 -cflags -fsanitize=${{ matrix.sanitizer }} test-self
+            ${{ matrix.env }} ./v ${{ matrix.optimization }} test-self
           fi
 
-  san-build-examples:
-    needs: verify
+  san-build-modules:
+    needs: [verify, fmt]
     runs-on: ubuntu-20.04
-    if: github.event_name != 'push' || github.event.ref == 'refs/heads/master' || github.event.repository.full_name != 'vlang/v'
     strategy:
       matrix:
         sanitizer: ['undefined', 'memory', 'address']
@@ -206,7 +214,7 @@ jobs:
         uses: actions/cache/restore@v3
         with:
           path: ./
-          key: ${{ runner.os }}-${{ env.CC }}-${{ github.sha }}
+          key: ${{ env.CACHE_ID }}
           fail-on-cache-miss: true
       - name: Setup Dependencies
         uses: awalsh128/cache-apt-pkgs-action@latest

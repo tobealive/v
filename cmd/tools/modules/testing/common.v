@@ -221,12 +221,8 @@ pub fn new_test_session(_vargs string, will_compile bool) TestSession {
 			skip_files << 'examples/pendulum-simulation/parallel.v'
 			skip_files << 'examples/pendulum-simulation/parallel_with_iw.v'
 			skip_files << 'examples/pendulum-simulation/sequential.v'
-			if testing.github_job == 'tcc' {
-				// TODO: fix these by adding declarations for the missing functions in the prebuilt tcc
-				skip_files << 'vlib/net/mbedtls/mbedtls_compiles_test.v'
-				skip_files << 'vlib/net/ssl/ssl_compiles_test.v'
-			}
 		}
+		// TODO: update github_job
 		if testing.runner_os != 'Linux' || testing.github_job != 'tcc' {
 			skip_files << 'examples/c_interop_wkhtmltopdf.v' // needs installation of wkhtmltopdf from https://github.com/wkhtmltopdf/packaging/releases
 			skip_files << 'examples/call_v_from_python/test.v' // the example only makes sense to be compiled, when python is installed
@@ -239,9 +235,6 @@ pub fn new_test_session(_vargs string, will_compile bool) TestSession {
 		if testing.github_job == 'ubuntu-docker-musl' {
 			skip_files << 'vlib/net/openssl/openssl_compiles_test.v'
 			skip_files << 'vlib/x/ttf/ttf_test.v'
-		}
-		if testing.github_job == 'tests-sanitize-memory-clang' {
-			skip_files << 'vlib/net/openssl/openssl_compiles_test.v'
 		}
 		if testing.github_job != 'misc-tooling' {
 			// These examples need .h files that are produced from the supplied .glsl files,

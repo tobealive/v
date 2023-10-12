@@ -23,17 +23,26 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  linux-tcc:
-    uses: ./.github/workflows/linux_tcc_ci.yml
+  linux-clang:
+    uses: ./.github/workflows/linux_clang_ci.yml
 
   linux-gcc:
     uses: ./.github/workflows/linux_gcc_ci.yml
 
-  linux-clang:
-    uses: ./.github/workflows/linux_clang_ci.yml
+  linux-tcc:
+    uses: ./.github/workflows/linux_tcc_ci.yml
+
+  linux-tcc-boehm-gc:
+    uses: ./.github/workflows/linux_tcc_boehm_gc_ci.yml
 
   macos:
     uses: ./.github/workflows/macos_ci.yml
 
-  windows:
-    uses: ./.github/workflows/windows_ci.yml
+  windows-gcc:
+    uses: ./.github/workflows/windows_gcc_ci.yml
+
+  windows-msvc:
+    uses: ./.github/workflows/windows_msvc_ci.yml
+
+  windows-tcc:
+    uses: ./.github/workflows/windows_tcc_ci.yml

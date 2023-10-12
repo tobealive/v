@@ -4,16 +4,16 @@ on:
   workflow_call:
 
 env:
-  CC: clang
   VFLAGS: -cc clang
   PKG_CONFIG_PATH: /usr/local/opt/pkgconfig:/usr/local/opt/libpq/lib/pkgconfig:/usr/local/opt/openssl@3/lib/pkgconfig:/opt/homebrew/lib/pkgconfig:/opt/homebrew/opt/libpq/lib/pkgconfig:/opt/homebrew/opt/openssl@3/lib/pkgconfig
+  CACHE_ID: macos-clang-${{ github.sha }}
 
 jobs:
   build:
     runs-on: macos-12
     if: github.event_name != 'push' || github.event.ref == 'refs/heads/master' || github.event.repository.full_name != 'vlang/v'
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
       - name: Install dependencies
         run: |
           echo "PKG_CONFIG_PATH is '$PKG_CONFIG_PATH'"
@@ -48,53 +48,77 @@ jobs:
         uses: actions/cache/save@v3
         with:
           path: ./
-          key: ${{ runner.os }}-${{ env.CC }}-${{ github.sha }}
+          key: ${{ env.CACHE_ID }}
 
   verify:
     needs: build
     runs-on: macos-12
-    if: github.event_name != 'push' || github.event.ref == 'refs/heads/master' || github.event.repository.full_name != 'vlang/v'
     steps:
       - name: Restore cache
         uses: actions/cache/restore@v3
         with:
           path: ./
-          key: ${{ runner.os }}-${{ env.CC }}-${{ github.sha }}
+          key: ${{ env.CACHE_ID }}
           fail-on-cache-miss: true
+      - name: Self compile
+        run: |
+          ./v -o v2 -parallel-cc cmd/v
+          unset VFLAGS
+          ./v -usecache examples/hello_world.v && examples/hello_world
+          ./v -o v2 -usecache cmd/v
+          ./v2 -o v3 -usecache cmd/v
+          ./v3 version
+          ./v3 -o tetris -usecache examples/tetris/tetris.v
       - name: Verify `v test` works
         run: |
           echo $VFLAGS
           ./v cmd/tools/test_if_v_test_system_works.v
           ./cmd/tools/test_if_v_test_system_works
-      - name: All code is formatted
-        run: VJOBS=1 ./v test-cleancode
       - name: Test pure V math module
         run: ./v -exclude @vlib/math/*.c.v test vlib/math/
 
-  test:
-    needs: verify
+  fmt:
+    needs: build
     runs-on: macos-12
-    if: github.event_name != 'push' || github.event.ref == 'refs/heads/master' || github.event.repository.full_name != 'vlang/v'
     steps:
       - name: Restore cache
         uses: actions/cache/restore@v3
         with:
           path: ./
-          key: ${{ runner.os }}-${{ env.CC }}-${{ github.sha }}
+          key: ${{ env.CACHE_ID }}
+          fail-on-cache-miss: true
+      - name: Test cleancode
+        run: ./v test-cleancode
+
+  test:
+    needs: [verify, fmt]
+    runs-on: macos-12
+    steps:
+      - name: Restore cache
+        uses: actions/cache/restore@v3
+        with:
+          path: ./
+          key: ${{ env.CACHE_ID }}
           fail-on-cache-miss: true
       - name: Self tests
         run: VJOBS=1 ./v test-self
 
-  build-modules-examples:
-    needs: verify
+  test-time:
+    needs: [verify, fmt]
+    uses: ./.github/workflows/time_ci.yml
+    with:
+      os: macos-12
+      cache_id: ${{ env.CACHE_ID }}
+
+  build-modules:
+    needs: [verify, fmt]
     runs-on: macos-12
-    if: github.event_name != 'push' || github.event.ref == 'refs/heads/master' || github.event.repository.full_name != 'vlang/v'
     steps:
       - name: Restore cache
         uses: actions/cache/restore@v3
         with:
           path: ./
-          key: ${{ runner.os }}-${{ env.CC }}-${{ github.sha }}
+          key: ${{ env.CACHE_ID }}
           fail-on-cache-miss: true
       - name: Build examples
         run: ./v build-examples
@@ -103,49 +127,33 @@ jobs:
       - name: Build blog tutorial with -autofree
         run: ./v -autofree -o blog tutorials/building_a_simple_web_blog_with_vweb/code/blog
       - name: Build examples with -prod
-        run: |
-          ./v -prod examples/news_fetcher.v
-      - name: v doctor
-        run: |
-          ./v doctor
-      - name: Test ved
-        run: |
-          git clone --depth 1 https://github.com/vlang/ved
-          cd ved && ../v -o ved .
-          ../v -autofree .
-          ../v -prod .
-          cd ..
-      - name: Build V UI examples
-        run: |
-          git clone --depth 1 https://github.com/vlang/ui
-          cd ui
-          mkdir -p ~/.vmodules
-          ln -s $(pwd) ~/.vmodules/ui
-          ../v examples/rectangles.v
-          ../v examples/users.v
-        # TODO: test if building UI examples works
-        # ../v run examples/build_examples.vsh
-      - name: V self compilation with -usecache
-        run: |
-          unset VFLAGS
-          ./v -usecache examples/hello_world.v && examples/hello_world
-          ./v  -o v2 -usecache cmd/v
-          ./v2 -o v3 -usecache cmd/v
-          ./v3 version
-          ./v3 -o tetris  -usecache examples/tetris/tetris.v
-      # TODO: separate job to compile variants
-      - name: V self compilation with -parallel-cc
-        run: ./v -o v2 -parallel-cc cmd/v
+        run: ./v -prod examples/news_fetcher.v
       - name: Test password input
         run: ./v test examples/password/
       - name: Test readline
         run: ./v test examples/readline/
+      - run: ./v symlink
+      - name: Test ved
+        run: |
+          git clone --depth 1 https://github.com/vlang/ved
+          cd ved
+          v -o ved .
+          v -autofree .
+          v -prod .
+      - name: Build V UI examples
+        run: |
+          v install --git https://github.com/vlang/ui
+          cd ~/.vmodules/ui/examples
+          v ./build_examples.vsh
 
   # NOTE:
-  # santize for more paths
+  # sanitize for more paths
   # examples on mac
   # sanitized msvc
   # below 1h instead of 2h+
   # cstrict test with tcc
-  # # TODO: sanitzed gcc instead of tcc test if it works with gcc and linking
+  # re-enable c2v for mac
+  # re-enable V UI example compilation
+  # removes cancel workflow as workflows are in the same concurrency group and will be automatically cancelled by github
+  # # TODO: sanitized gcc instead of tcc test if it works with gcc and linking
   # VFLAGS: -cc tcc

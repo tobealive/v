@@ -13,7 +13,6 @@ on:
 
 jobs:
   test-nix:
-    if: runner.os == 'Linux' || runner.os == 'macOS'
     runs-on: ${{ inputs.os }}
     steps:
       - name: Restore cache
@@ -32,24 +31,3 @@ jobs:
         run: TZ=Etc/GMT-12 ./v test vlib/time/
       - name: Test time functions in a timezone using daylight saving (Europe/Paris)
         run: TZ=Europe/Paris ./v test vlib/time/
-
-  test-windows:
-    if: runner.os == 'Windows'
-    runs-on: ${{ inputs.os }}
-    steps:
-      - name: Restore cache
-        uses: actions/cache/restore@v3
-        with:
-          path: ./
-          key: ${{ inputs.cache_id }}
-          fail-on-cache-miss: true
-      - name: Test time functions in a timezone UTC-12
-        run: tzutil /s "Dateline Standard Time" && ./v test vlib/time/
-      - name: Test time functions in a timezone UTC-3
-        run: tzutil /s "Greenland Standard Time" && ./v test vlib/time/
-      - name: Test time functions in a timezone UTC+3
-        run: tzutil /s "Russian Standard Time" && ./v test vlib/time/
-      - name: Test time functions in a timezone UTC+12
-        run: tzutil /s "New Zealand Standard Time" && ./v test vlib/time/
-      - name: Test time functions in a timezone using daylight saving (Europe/Paris)
-        run: tzutil /s "W. Europe Standard Time" && ./v test vlib/time/
