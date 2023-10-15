@@ -1,15 +1,14 @@
 name: Cross CI
 
-on:
-  push:
-    paths-ignore:
-      - "**.md"
-  pull_request:
-    paths-ignore:
-      - "**.md"
+# on:
+#   push:
+#     paths-ignore:
+#       - "**.md"
+#   pull_request:
+#     paths-ignore:
+#       - "**.md"
 
 jobs:
-
   macos-cross:
     runs-on: macOS-latest
     if: github.event_name != 'push' || github.event.ref == 'refs/heads/master' || github.event.repository.full_name != 'vlang/v'

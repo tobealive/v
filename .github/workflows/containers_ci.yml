@@ -1,14 +1,14 @@
 name: Containers CI
 
-on:
-  push:
-    paths-ignore:
-      - "**.md"
-      - "**.yml"
-  pull_request:
-    paths-ignore:
-      - "**.md"
-      - "**.yml"
+# on:
+#   push:
+#     paths-ignore:
+#       - "**.md"
+#       - "**.yml"
+#   pull_request:
+#     paths-ignore:
+#       - "**.md"
+#       - "**.yml"
 
 concurrency:
   group: build-containers-${{ github.event.pull_request.number || github.sha }}

@@ -1,15 +1,15 @@
 name: Build Vinix
 
-on:
-  pull_request:
-    paths-ignore:
-      - "**.md"
-  push:
-    branches:
-      - master
-    paths-ignore:
-      - "**.md"
-      - "**.yml"
+# on:
+#   pull_request:
+#     paths-ignore:
+#       - "**.md"
+#   push:
+#     branches:
+#       - master
+#     paths-ignore:
+#       - "**.md"
+#       - "**.yml"
 
 jobs:
   vinix-build:

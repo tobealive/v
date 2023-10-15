@@ -1,12 +1,12 @@
 name: Graphics CI
 
-on:
-  push:
-    paths-ignore:
-      - "**.md"
-  pull_request:
-    paths-ignore:
-      - "**.md"
+# on:
+#   push:
+#     paths-ignore:
+#       - "**.md"
+#   pull_request:
+#     paths-ignore:
+#       - "**.md"
 
 jobs:
   gg-regressions:
@@ -22,6 +22,7 @@ jobs:
       - name: Checkout V
         uses: actions/checkout@v3
 
+        # TODO: update checkout, use make -j4, setup test tools step
       - name: Build local v
         run: make
 

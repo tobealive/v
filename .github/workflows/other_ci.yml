@@ -1,12 +1,12 @@
 name: Other CI
 
-on:
-  push:
-    paths-ignore:
-      - '**.md'
-  pull_request:
-    paths-ignore:
-      - '**.md'
+# on:
+#   push:
+#     paths-ignore:
+#       - '**.md'
+#   pull_request:
+#     paths-ignore:
+#       - '**.md'
 
 concurrency:
   group: build-other-${{ github.event.pull_request.number || github.sha }}

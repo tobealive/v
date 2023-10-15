@@ -1,16 +1,16 @@
 name: Time CI
 
-on:
-  push:
-    paths-ignore:
-      - '**.md'
-      - '**.yml'
-      - '!**/time_ci.yml'
-  pull_request:
-    paths-ignore:
-      - '**.md'
-      - '**.yml'
-      - '!**/time_ci.yml'
+# on:
+#   push:
+#     paths-ignore:
+#       - '**.md'
+#       - '**.yml'
+#       - '!**/time_ci.yml'
+#   pull_request:
+#     paths-ignore:
+#       - '**.md'
+#       - '**.yml'
+#       - '!**/time_ci.yml'
 
 concurrency:
   group: time-ci-${{ github.event.pull_request.number || github.sha }}

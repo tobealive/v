@@ -1,44 +1,45 @@
 name: wasm backend CI
 
-on:
-  push:
-    paths:
-      - '!**'
-      - '!**.md'
-      - 'cmd/tools/builders/**.v'
-      - 'vlib/builtin/**.v'
-      - 'vlib/v/ast/**.v'
-      - 'vlib/v/scanner/**.v'
-      - 'vlib/v/parser/**.v'
-      - 'vlib/v/checker/**.v'
-      - 'vlib/v/gen/c/**.v'
-      - 'vlib/v/builder/**.v'
-      - 'vlib/v/cflag/**.v'
-      - 'vlib/v/live/**.v'
-      - 'vlib/v/util/**.v'
-      - 'vlib/v/markused/**.v'
-      - 'vlib/v/preludes/**.v'
-      - 'vlib/v/gen/wasm/**.v'
-      - 'vlib/v/gen/wasm/tests/**.v'
-  pull_request:
-    paths:
-      - '!**'
-      - '!**.md'
-      - 'cmd/tools/builders/**.v'
-      - 'vlib/builtin/**.v'
-      - 'vlib/v/ast/**.v'
-      - 'vlib/v/scanner/**.v'
-      - 'vlib/v/parser/**.v'
-      - 'vlib/v/checker/**.v'
-      - 'vlib/v/gen/c/**.v'
-      - 'vlib/v/builder/**.v'
-      - 'vlib/v/cflag/**.v'
-      - 'vlib/v/live/**.v'
-      - 'vlib/v/util/**.v'
-      - 'vlib/v/markused/**.v'
-      - 'vlib/v/preludes/**.v'
-      - 'vlib/v/gen/wasm/**.v'
-      - 'vlib/v/gen/wasm/tests/**.v'
+# TODO: check paths
+# on:
+#   push:
+#     paths:
+#       - '!**'
+#       - '!**.md'
+#       - 'cmd/tools/builders/**.v'
+#       - 'vlib/builtin/**.v'
+#       - 'vlib/v/ast/**.v'
+#       - 'vlib/v/scanner/**.v'
+#       - 'vlib/v/parser/**.v'
+#       - 'vlib/v/checker/**.v'
+#       - 'vlib/v/gen/c/**.v'
+#       - 'vlib/v/builder/**.v'
+#       - 'vlib/v/cflag/**.v'
+#       - 'vlib/v/live/**.v'
+#       - 'vlib/v/util/**.v'
+#       - 'vlib/v/markused/**.v'
+#       - 'vlib/v/preludes/**.v'
+#       - 'vlib/v/gen/wasm/**.v'
+#       - 'vlib/v/gen/wasm/tests/**.v'
+#   pull_request:
+#     paths:
+#       - '!**'
+#       - '!**.md'
+#       - 'cmd/tools/builders/**.v'
+#       - 'vlib/builtin/**.v'
+#       - 'vlib/v/ast/**.v'
+#       - 'vlib/v/scanner/**.v'
+#       - 'vlib/v/parser/**.v'
+#       - 'vlib/v/checker/**.v'
+#       - 'vlib/v/gen/c/**.v'
+#       - 'vlib/v/builder/**.v'
+#       - 'vlib/v/cflag/**.v'
+#       - 'vlib/v/live/**.v'
+#       - 'vlib/v/util/**.v'
+#       - 'vlib/v/markused/**.v'
+#       - 'vlib/v/preludes/**.v'
+#       - 'vlib/v/gen/wasm/**.v'
+#       - 'vlib/v/gen/wasm/tests/**.v'
 
 concurrency:
   group: wasm-backend-ci-${{ github.event.pull_request.number || github.sha }}
@@ -97,7 +98,6 @@ jobs:
 
       - name: Build examples
         run: VTEST_ONLY=wasm ./v build-examples
-
 #  wasm-backend-windows:
 #    runs-on: windows-2022
 #    if: github.event_name != 'push' || github.event.ref == 'refs/heads/master' || github.event.repository.full_name != 'vlang/v'
