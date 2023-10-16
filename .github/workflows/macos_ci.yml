@@ -6,7 +6,7 @@ on:
 env:
   VFLAGS: -cc clang
   PKG_CONFIG_PATH: /usr/local/opt/pkgconfig:/usr/local/opt/libpq/lib/pkgconfig:/usr/local/opt/openssl@3/lib/pkgconfig:/opt/homebrew/lib/pkgconfig:/opt/homebrew/opt/libpq/lib/pkgconfig:/opt/homebrew/opt/openssl@3/lib/pkgconfig
-  CACHE_ID: macos-clang-${{ github.sha }}
+  CACHE_ID: macOS-clang-${{ github.sha }} # the os prefix is equivalent to the RUNNER_OS variable
 
 jobs:
   build:
@@ -30,8 +30,6 @@ jobs:
         run: ./v -o v2 cmd/v && ./v2 -o v3 cmd/v
       - name: Test symlink
         run: ./v symlink
-      - name: Build vpm
-        run: ./v install markdown && git clone --depth 1 https://github.com/vlang/vpm && cd vpm && ../v . || ../v cmd/vpm && cd ..
       # - name: Set up pg database
       #   run: |
       #     pg_ctl -D /usr/local/var/postgres -l /usr/local/var/postgres/server.log start
@@ -60,18 +58,18 @@ jobs:
           path: ./
           key: ${{ env.CACHE_ID }}
           fail-on-cache-miss: true
+      - name: Print System and Environment Info
+        run: ./v doctor
       - name: Self compile
         run: |
-          ./v -o v2 -parallel-cc cmd/v
-          unset VFLAGS
-          ./v -usecache examples/hello_world.v && examples/hello_world
-          ./v -o v2 -usecache cmd/v
-          ./v2 -o v3 -usecache cmd/v
-          ./v3 version
-          ./v3 -o tetris -usecache examples/tetris/tetris.v
+          ./v -d debug_malloc -d debug_realloc -o v cmd/v
+          ./v -o v2 cmd/v && ./v2 -o v3 cmd/v && ./v3 -o v4 cmd/v
+          # Test v -realloc arena allocation
+          ./v -o vrealloc -prealloc cmd/v && ./vrealloc -o v3 cmd/v && ./v3 -o v4 cmd/v
+          # Test self compilation with -skip-unused
+          ./v -skip-unused -o v2 cmd/v && ./v2 -skip-unused -o v3 cmd/v && ./v3 -skip-unused -o v4 cmd/v
       - name: Verify `v test` works
         run: |
-          echo $VFLAGS
           ./v cmd/tools/test_if_v_test_system_works.v
           ./cmd/tools/test_if_v_test_system_works
       - name: Test pure V math module
@@ -87,11 +85,13 @@ jobs:
           path: ./
           key: ${{ env.CACHE_ID }}
           fail-on-cache-miss: true
+      - name: Test fmt
+        run: VJOBS=1 ./v test-fmt
       - name: Test cleancode
-        run: ./v test-cleancode
+        run: VJOBS=1 ./v test-cleancode
 
-  test:
-    needs: [verify, fmt]
+  test-self:
+    needs: verify
     runs-on: macos-12
     steps:
       - name: Restore cache
@@ -103,15 +103,8 @@ jobs:
       - name: Self tests
         run: VJOBS=1 ./v test-self
 
-  test-time:
-    needs: [verify, fmt]
-    uses: ./.github/workflows/time_ci.yml
-    with:
-      os: macos-12
-      cache_id: ${{ env.CACHE_ID }}
-
-  build-modules:
-    needs: [verify, fmt]
+  test-other:
+    needs: verify
     runs-on: macos-12
     steps:
       - name: Restore cache
@@ -120,40 +113,55 @@ jobs:
           path: ./
           key: ${{ env.CACHE_ID }}
           fail-on-cache-miss: true
-      - name: Build examples
-        run: ./v build-examples
-      - name: Build tetris with -autofree
-        run: ./v -autofree -o tetris examples/tetris/tetris.v
-      - name: Build blog tutorial with -autofree
-        run: ./v -autofree -o blog tutorials/building_a_simple_web_blog_with_vweb/code/blog
-      - name: Build examples with -prod
-        run: ./v -prod examples/news_fetcher.v
+      - name: Build V binaries
+        run: ./v build-vbinaries
+      - name: Build benches
+        run: ./v should-compile-all vlib/v/tests/bench/
+      - name: Build option_test.v with -autofree
+        run: ./v -autofree vlib/v/tests/option_test.v
       - name: Test password input
         run: ./v test examples/password/
       - name: Test readline
         run: ./v test examples/readline/
-      - run: ./v symlink
-      - name: Test ved
-        run: |
-          git clone --depth 1 https://github.com/vlang/ved
-          cd ved
-          v -o ved .
-          v -autofree .
-          v -prod .
-      - name: Build V UI examples
-        run: |
-          v install --git https://github.com/vlang/ui
-          cd ~/.vmodules/ui/examples
-          v ./build_examples.vsh
+
+  examples-and-modules:
+    needs: verify
+    uses: ./.github/workflows/examples_and_modules_ci.yml
+    with:
+      os: macos-12
+      cc: clang
+      vflags: -cc clang
+
+  apps-and-libraries:
+    needs: verify
+    uses: ./.github/workflows/apps_and_libraries_ci.yml
+    with:
+      os: macos-12
+      cc: clang
+      vflags: -cc clang
+
+  c2v:
+    needs: verify
+    uses: ./.github/workflows/c2v_ci.yml
+    with:
+      os: macos-12
+      cc: clang
+      VFLAGS: -cc clang
 
   # NOTE:
   # sanitize for more paths
   # examples on mac
+  # more uniform coverage for platforms
   # sanitized msvc
   # below 1h instead of 2h+
   # cstrict test with tcc
-  # re-enable c2v for mac
+  # re-enalbes native example
   # re-enable V UI example compilation
   # removes cancel workflow as workflows are in the same concurrency group and will be automatically cancelled by github
-  # # TODO: sanitized gcc instead of tcc test if it works with gcc and linking
-  # VFLAGS: -cc tcc
+  # `make -j4` where missing
+  # format all yml files
+  # VFLAGS: -cc tcc TODO: sanitized gcc instead of tcc test if it works with gcc and linking
+  # TODO: run cis on success where appropriate
+  # TODO: setup, dependencies ones before running on linux than start workflows? Test if this is suitable, ok if not
+  # TODO: LATER
+  # Further shorten tests, prioritize tests, than run modules

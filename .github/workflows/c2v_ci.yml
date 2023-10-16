@@ -1,40 +1,37 @@
 name: C2V apps
 
 on:
-  push:
-    paths-ignore:
-      - '**.md'
-      - '**.yml'
-      - '!**/c2v_ci.yml'
-      - 'doc/**'
-      - 'examples/**'
-      - 'tutorials/**'
-  pull_request:
-    paths-ignore:
-      - '**.md'
-      - '**.yml'
-      - '!**/c2v_ci.yml'
-      - 'doc/**'
-      - 'examples/**'
-      - 'tutorials/**'
+  workflow_call:
+    inputs:
+      os:
+        required: true
+        type: string
+      cc:
+        description: 'The compiler used in the calling workflow to restore the V cache'
+        required: true
+        type: string
+      vflags:
+        required: true
+        type: string
 
-concurrency:
-  group: build-c2v-apps-${{ github.event.pull_request.number || github.sha }}
-  cancel-in-progress: true
+env:
+  VFLAGS: ${{ inputs.vflags }}
 
 jobs:
   build-doom:
     if: github.event_name != 'push' || github.event.ref == 'refs/heads/master' || github.event.repository.full_name != 'vlang/v'
-    strategy:
-      matrix:
-        os: [ubuntu-20.04, macos-12]
-      fail-fast: false
-    runs-on: ${{ matrix.os }}
+    runs-on: ${{ inputs.os }}
     timeout-minutes: 20
     steps:
       - uses: actions/checkout@v4
-      - name: Build V
-        run: make && ./v symlink -githubci
+      - name: Restore cache
+        uses: actions/cache/restore@v3
+        with:
+          path: ./
+          key: ${{ runner.os }}-${{ inputs.cc }}-${{ github.sha }}
+          fail-on-cache-miss: true
+      - name: Symlink V
+        run: ./v symlink -githubci
       - name: Install C2V
         run: |
           v install --git https://github.com/vlang/c2v
@@ -42,8 +39,8 @@ jobs:
       - name: Install dependencies
         run: |
           if [ "${{ runner.os }}" == "Linux" ]; then
-            sudo apt update -y -qq
-            sudo apt install libsdl2-dev libsdl2-mixer-dev libsdl2-net-dev libpng-dev libsamplerate0-dev
+            sudo apt update
+            sudo apt install -y -qq libsdl2-dev libsdl2-mixer-dev libsdl2-net-dev libpng-dev libsamplerate0-dev
           else
             brew install sdl2 sdl2_mixer sdl2_net libpng libsamplerate
           fi
@@ -59,8 +56,8 @@ jobs:
           WAD_FILE=~/DOOM1.WAD ~/code/doom/build_whole_project.sh
 
   test-regression:
-    if: github.event_name != 'push' || github.event.ref == 'refs/heads/master' || github.event.repository.full_name != 'vlang/v'
-    runs-on: ubuntu-20.04
+    if: contains(inputs.os, 'ubuntu') && (github.event_name != 'push' || github.event.ref == 'refs/heads/master' || github.event.repository.full_name != 'vlang/v')
+    runs-on: ${{ inputs.os }}
     timeout-minutes: 20
     env:
       VFLAGS: -cc tcc
@@ -69,16 +66,22 @@ jobs:
       VTMP: /tmp
     steps:
       - uses: actions/checkout@v4
-      - name: Build V
-        run: make && ./v symlink -githubci
+      - name: Restore cache
+        uses: actions/cache/restore@v3
+        with:
+          path: ./
+          key: ${{ runner.os }}-${{ inputs.cc }}-${{ github.sha }}
+          fail-on-cache-miss: true
+      - name: Symlink V
+        run: ./v symlink -githubci
       - name: Install C2V
         run: |
           v install --git https://github.com/vlang/c2v
           v -g ~/.vmodules/c2v/ || true
       - name: Install dependencies
         run: |
-          sudo apt update -y -qq
-          sudo apt install libsdl2-dev libsdl2-mixer-dev libsdl2-net-dev libpng-dev libsamplerate0-dev
+          sudo apt update
+          sudo apt install -y -qq libsdl2-dev libsdl2-mixer-dev libsdl2-net-dev libpng-dev libsamplerate0-dev
           # c2v / DOOM dependencies
           # vgret dependencies
           # imagemagick              : convert, mogrify, import

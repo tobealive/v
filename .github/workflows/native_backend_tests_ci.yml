@@ -50,18 +50,15 @@ jobs:
   native-backend:
     strategy:
       matrix:
-        # TODO: update syntax
         os: [ubuntu-20.04, macos-11, macos-12, windows-2019]
     runs-on: ${{ matrix.os }}
     if: github.event_name != 'push' || github.event.ref == 'refs/heads/master' || github.event.repository.full_name != 'vlang/v'
     steps:
-      - uses: actions/checkout@v3
-
+      - uses: actions/checkout@v4
       - name: Install linker
         if: ${{ startsWith(matrix.os, 'ubuntu')}}
         run: |
-          sudo apt-get install --quiet -y binutils
-
+          sudo apt install --quiet -y binutils
       - name: Build V with make.bat
         if: ${{ startsWith(matrix.os, 'windows') }}
         run: |
@@ -69,10 +66,7 @@ jobs:
           .\v.exe symlink -githubci
       - name: Build V with make
         if: ${{ !startsWith(matrix.os, 'windows') }}
-        run: |
-          make
-          ./v symlink -githubci
-
+        run: make && ./v symlink -githubci
       - name: Run the native backend tests serially with more details
         run: |
           v -stats vlib/v/gen/native/macho_test.v

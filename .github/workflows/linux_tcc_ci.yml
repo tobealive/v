@@ -24,14 +24,13 @@ jobs:
           make -j4
           thirdparty/tcc/tcc.exe -version
           ./v -showcc -cg -cstrict -o v cmd/v # Make sure vtcc can build itself twice
-      - name: V doctor
-        run: ./v doctor
       - name: Cache
         uses: actions/cache/save@v3
         with:
           path: ./
           key: ${{ env.CACHE_ID }}
 
+  # TODO: test binaries separately
   verify:
     needs: build
     runs-on: ubuntu-20.04
@@ -42,6 +41,8 @@ jobs:
           path: ./
           key: ${{ env.CACHE_ID }}
           fail-on-cache-miss: true
+      - name: Print System and Environment Info
+        run: ./v doctor
       - name: Self compile
         run: |
           ./v -d debug_malloc -d debug_realloc -o v cmd/v
@@ -52,7 +53,6 @@ jobs:
           ./v -skip-unused -o v2 cmd/v && ./v2 -skip-unused -o v3 cmd/v && ./v3 -skip-unused -o v4 cmd/v
       - name: Verify `v test` works
         run: |
-          echo $VFLAGS
           ./v cmd/tools/test_if_v_test_system_works.v
           ./cmd/tools/test_if_v_test_system_works
       - name: Test pure V math module
@@ -68,11 +68,13 @@ jobs:
           path: ./
           key: ${{ env.CACHE_ID }}
           fail-on-cache-miss: true
+      - name: Test fmt
+        run: ./v test-fmt
       - name: Test cleancode
         run: ./v test-cleancode
 
-  test:
-    needs: [verify, fmt]
+  test-self:
+    needs: verify
     runs-on: ubuntu-20.04
     timeout-minutes: 90
     strategy:
@@ -99,8 +101,8 @@ jobs:
       - name: Self tests (-cstrict)
         run: VTEST_JUST_ESSENTIAL=1 V_CI_CSTRICT=1 ./v -cstrict test-self
 
-  test-time:
-    needs: [verify, fmt]
+  test-other:
+    needs: verify
     runs-on: ubuntu-20.04
     steps:
       - name: Restore cache
@@ -109,19 +111,28 @@ jobs:
           path: ./
           key: ${{ env.CACHE_ID }}
           fail-on-cache-miss: true
-      - name: Test time functions in a timezone UTC-12
-        run: TZ=Etc/GMT+12 ./v test vlib/time/
-      - name: Test time functions in a timezone UTC-3
-        run: TZ=Etc/GMT+3 ./v test vlib/time/
-      - name: Test time functions in a timezone UTC+3
-        run: TZ=Etc/GMT-3 ./v test vlib/time/
-      - name: Test time functions in a timezone UTC+12
-        run: TZ=Etc/GMT-12 ./v test vlib/time/
-      - name: Test time functions in a timezone using daylight saving (Europe/Paris)
-        run: TZ=Europe/Paris ./v test vlib/time/
+      - name: Build V binaries
+        run: ./v build-vbinaries
+      - name: Build benches
+        run: ./v should-compile-all vlib/v/tests/bench/
+      - name: Build option_test.v with -autofree
+        run: ./v -autofree vlib/v/tests/option_test.v
+      - name: Test password input
+        run: ./v test examples/password/
+      - name: Test readline
+        run: ./v test examples/readline/
 
+  c2v:
+    needs: verify
+    uses: ./.github/workflows/c2v_ci.yml
+    with:
+      os: ubuntu-20.04
+      cc: tcc
+      vflags: -cc tcc -no-retry-compilation
+
+  # TODO: use re-usable workflow
   build-modules:
-    needs: [verify, fmt]
+    needs: verify
     runs-on: ubuntu-20.04
     steps:
       - name: Restore cache
@@ -137,7 +148,7 @@ jobs:
           version: 1.0
       - name: Setup example dependencies
         run: |
-          sudo apt-get install --quiet -y xfonts-75dpi xfonts-base
+          sudo apt install --quiet -y xfonts-75dpi xfonts-base
           # The following is needed for examples/wkhtmltopdf.v
           wget https://github.com/wkhtmltopdf/packaging/releases/download/0.12.6-1/wkhtmltox_0.12.6-1.focal_amd64.deb
           sudo dpkg -i wkhtmltox_0.12.6-1.focal_amd64.deb
@@ -145,12 +156,6 @@ jobs:
         run: ./v -W build-examples
       - name: Build V tools
         run: ./v -W build-tools
-      - name: Build V binaries
-        run: ./v build-vbinaries
-      - name: Build benches
-        run: ./v should-compile-all vlib/v/tests/bench/
-      - name: Run a VSH script
-        run: ./v run examples/v_script.vsh
       - name: Test V tutorials
         run: ./v tutorials/building_a_simple_web_blog_with_vweb/code/blog
       - name: Build cmd/tools/fast

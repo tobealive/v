@@ -16,7 +16,7 @@ jobs:
     env:
       VFLAGS: -cc tcc -no-retry-compilation
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
       - name: Install dependencies
         run: sudo apt-get install --quiet -y libssl-dev
       - name: Build v
@@ -29,27 +29,21 @@ jobs:
         run: ./v doctor
       - name: Run websockets tests
         run: ./v -g test vlib/net/websocket/
-
-      ## Autobahn integrations tests
+        ## Autobahn integrations tests
       - name: Run autobahn services
         run: docker-compose -f ${{github.workspace}}/vlib/net/websocket/tests/autobahn/docker-compose.yml up -d
-
       - name: Wait for the service to start
         run: sleep 10s
-
       - name: Build client test
         run: docker exec autobahn_client "/src/v" "/src/vlib/net/websocket/tests/autobahn/autobahn_client.v"
       - name: Run client test
         run: docker exec autobahn_client "/src/vlib/net/websocket/tests/autobahn/autobahn_client"
-
       - name: Build client wss test
         run: docker exec autobahn_client "/src/v" "/src/vlib/net/websocket/tests/autobahn/autobahn_client_wss.v"
-
       - name: Run client wss test
         run: docker exec autobahn_client "/src/vlib/net/websocket/tests/autobahn/autobahn_client_wss"
       - name: Run server test
         run: docker exec autobahn_server "wstest" "-m" "fuzzingclient" "-s" "/config/fuzzingclient.json"
-
       - name: Copy reports
         run: docker cp autobahn_server:/reports ${{github.workspace}}/reports
       - name: Copy reports wss
@@ -58,31 +52,26 @@ jobs:
         run: docker exec autobahn_server "python" "/check_results.py"
       - name: Test success WSS
         run: docker exec autobahn_server_wss "python" "/check_results.py"
-
       - name: Publish all reports
         uses: actions/upload-artifact@v3
         with:
           name: full report
           path: ${{github.workspace}}/reports
-
       - name: Publish report client
         uses: actions/upload-artifact@v3
         with:
           name: client
           path: ${{github.workspace}}/reports/clients/index.html
-
       - name: Publish report server
         uses: actions/upload-artifact@v3
         with:
           name: server
           path: ${{github.workspace}}/reports/servers/index.html
-
       - name: Publish all reports WSS
         uses: actions/upload-artifact@v3
         with:
           name: full report wss
           path: ${{github.workspace}}/reports_wss
-
       - name: Publish report client wss
         uses: actions/upload-artifact@v3
         with:

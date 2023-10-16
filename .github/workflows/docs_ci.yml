@@ -18,9 +18,9 @@ jobs:
     if: github.event_name != 'push' || github.event.ref == 'refs/heads/master' || github.event.repository.full_name != 'vlang/v'
     timeout-minutes: 5
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
       - name: Build V
-        run: make
+        run: make -j4
       - name: Check markdown line length & code examples
         run: ./v check-md -hide-warnings .
         ## NB: -hide-warnings is used here, so that the output is less noisy,
@@ -33,17 +33,14 @@ jobs:
     env:
       MOPTIONS: --relative-paths --exclude /vlib/v/ --exclude /builtin/linux_bare/ --exclude /testdata/ --exclude /tests/
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
       - name: Build V
-        run: make
-
+        run: make -j4
       - name: Checkout previous v
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
         with:
           repository: vlang/v
           ref: master # important
           path: pv
-
       - name: Check against parent commit
-        run: |
-          ./v missdoc --diff $MOPTIONS pv/vlib vlib
+        run: ./v missdoc --diff $MOPTIONS pv/vlib vlib

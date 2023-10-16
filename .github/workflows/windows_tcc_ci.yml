@@ -22,6 +22,8 @@ jobs:
         run: .\make.bat -tcc
       - name: Test new v.c
         run: |
+          # TODO: remove
+          printenv
           ./v -o v.c cmd/v
           .\thirdparty\tcc\tcc.exe -Werror -w -ladvapi32 -bt10 v.c
       - name: V doctor
@@ -71,11 +73,13 @@ jobs:
           path: ./
           key: ${{ env.CACHE_ID }}
           fail-on-cache-miss: true
+      - name: Test fmt
+        run: ./v test-fmt
       - name: Test cleancode
         run: ./v test-cleancode
 
   test:
-    needs: [verify, fmt]
+    needs: verify
     runs-on: windows-2019
     steps:
       - name: Restore cache
@@ -84,11 +88,15 @@ jobs:
           path: ./
           key: ${{ env.CACHE_ID }}
           fail-on-cache-miss: true
+      - name: Install dependencies
+        run: |
+          ./v setup-freetype
+          ./.github/workflows/windows-install-sqlite.bat
       - name: Self tests
         run: ./v test-self
 
   build-modules:
-    needs: [verify, fmt]
+    needs: verify
     runs-on: windows-2019
     steps:
       - name: Restore cache

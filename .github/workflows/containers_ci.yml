@@ -15,11 +15,10 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-
   alpine-docker-musl-gcc:
     runs-on: ubuntu-20.04
     if: github.event_name != 'push' || github.event.ref == 'refs/heads/master' || github.event.repository.full_name != 'vlang/v'
-    timeout-minutes: 181
+    timeout-minutes: 90
     container:
       # Alpine docker pre-built container
       image: thevlang/vlang:alpine-build
@@ -28,11 +27,9 @@ jobs:
         VFLAGS: -cc gcc
       volumes:
         - ${{github.workspace}}:/opt/vlang
-
     steps:
       - name: Checkout
-        uses: actions/checkout@v3
-
+        uses: actions/checkout@v4
       - name: Show Environment
         run: |
           echo "PWD:"
@@ -41,24 +38,19 @@ jobs:
           env
           echo "C Compiler:"
           gcc --version
-
       - name: Add dependencies
-        run: |
-          apk add libc6-compat
-
+        run: apk add libc6-compat
       - name: Build V
         run: CC=gcc make
-
-      - name: All code is formatted
+      - name: Test cleancode
         run: ./v test-cleancode
-
       - name: Run only essential tests
         run: VTEST_JUST_ESSENTIAL=1 ./v test-self
 
   ubuntu-docker-musl:
     runs-on: ubuntu-20.04
     if: github.event_name != 'push' || github.event.ref == 'refs/heads/master' || github.event.repository.full_name != 'vlang/v'
-    timeout-minutes: 121
+    timeout-minutes: 120
     container:
       image: thevlang/vlang:ubuntu-build
       env:
@@ -67,22 +59,17 @@ jobs:
         VFLAGS: -cc musl-gcc -gc none
       volumes:
         - ${{github.workspace}}:/opt/vlang
-
     steps:
       - name: Checkout
-        uses: actions/checkout@v3
-
+        uses: actions/checkout@v4
       - name: Build V
-        run: |
-          echo $VFLAGS && make -j4 && ./v -cg -o v cmd/v
+        run: echo $VFLAGS && make -j4 && ./v -cg -o v cmd/v
       - name: Verify `v test` works
         run: |
           echo $VFLAGS
           ./v cmd/tools/test_if_v_test_system_works.v
           ./cmd/tools/test_if_v_test_system_works
-
-      - name: All code is formatted
+      - name: Test cleancode
         run: ./v test-cleancode
-
       - name: Test V fixed tests
         run: ./v test-self

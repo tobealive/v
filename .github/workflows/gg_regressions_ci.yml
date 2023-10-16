@@ -20,12 +20,10 @@ jobs:
       VTMP: /tmp
     steps:
       - name: Checkout V
-        uses: actions/checkout@v3
-
+        uses: actions/checkout@v4
         # TODO: update checkout, use make -j4, setup test tools step
-      - name: Build local v
-        run: make
-
+      - name: Build V
+        run: make -j4
       - name: Setup dependencies
         run: |
           # imagemagick              : convert, mogrify
@@ -34,12 +32,11 @@ jobs:
           # libxcursor-dev libxi-dev : V gfx deps
           # libgl1-mesa-dri          : For headless rendering / software DRI driver (LIBGL_ALWAYS_SOFTWARE=true)
           # freeglut3-dev            : Fixes graphic apps compilation with tcc
-          sudo apt-get update
-          sudo apt-get install imagemagick openimageio-tools libgl1-mesa-dri xvfb libxcursor-dev libxi-dev freeglut3-dev xsel xclip
+          sudo apt update
+          sudo apt install -y -qq imagemagick openimageio-tools libgl1-mesa-dri xvfb libxcursor-dev libxi-dev freeglut3-dev xsel xclip
           wget https://raw.githubusercontent.com/tremby/imgur.sh/c98345d/imgur.sh
           git clone https://github.com/Larpon/gg-regression-images gg-regression-images
           chmod +x ./imgur.sh
-
       - name: Sample and compare
         id: compare
         continue-on-error: true
@@ -47,7 +44,6 @@ jobs:
           Xvfb $DISPLAY -screen 0 1280x1024x24 -fbdir /var/tmp/ &
           sleep 1; while [ ! -f /var/tmp/Xvfb_screen0 ]; do sleep 0.5; done # give xvfb time to start, even on slow CI runs
           sleep 1; ./v gret -t ./gg-regression-images/vgret.v_examples.toml -v ./gg-sample_images ./gg-regression-images
-
       - name: Upload regression to imgur
         if: steps.compare.outcome != 'success'
         run: |

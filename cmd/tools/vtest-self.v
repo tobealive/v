@@ -3,7 +3,7 @@ module main
 import os
 import testing
 
-const github_job = os.getenv('GITHUB_JOB')
+const ci = os.getenv('CI') == 'true'
 
 const just_essential = os.getenv('VTEST_JUST_ESSENTIAL') != ''
 
@@ -351,7 +351,7 @@ fn main() {
 	}
 
 	$if windows {
-		if github_job == 'tcc' {
+		if ci && os.getenv('VFLAGS').contains('tcc') {
 			tsession.skip_files << 'vlib/v/tests/project_with_cpp_code/compiling_cpp_files_with_a_cplusplus_compiler_test.v'
 		}
 	}

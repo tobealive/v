@@ -79,11 +79,13 @@ jobs:
           path: ./
           key: ${{ env.CACHE_ID }}
           fail-on-cache-miss: true
+      - name: Test fmt
+        run: ./v test-fmt
       - name: Test cleancode
         run: ./v test-cleancode
 
   test:
-    needs: [verify, fmt]
+    needs: verify
     runs-on: ubuntu-20.04
     timeout-minutes: 90
     strategy:
@@ -118,7 +120,7 @@ jobs:
           fi
 
   build-modules:
-    needs: [verify, fmt]
+    needs: verify
     runs-on: ubuntu-20.04
     steps:
       - name: Restore cache
@@ -166,7 +168,7 @@ jobs:
           ls
 
   san-test:
-    needs: [verify, fmt]
+    needs: verify
     runs-on: ubuntu-20.04
     timeout-minutes: 120
     strategy:
@@ -201,7 +203,7 @@ jobs:
           fi
 
   san-build-modules:
-    needs: [verify, fmt]
+    needs: verify
     runs-on: ubuntu-20.04
     strategy:
       matrix:

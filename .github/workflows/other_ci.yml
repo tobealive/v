@@ -18,27 +18,10 @@ jobs:
     if: github.event_name != 'push' || github.event.ref == 'refs/heads/master' || github.event.repository.full_name != 'vlang/v'
     timeout-minutes: 15
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
       - name: No GPL licensed code, should be added accidentally
         run: |
           ! grep -r --exclude="*.yml" "a GPL license" .
-
-  code-formatting:
-    runs-on: ubuntu-20.04
-    if: github.event_name != 'push' || github.event.ref == 'refs/heads/master' || github.event.repository.full_name != 'vlang/v'
-    timeout-minutes: 15
-    env:
-      VFLAGS: -cc gcc
-    steps:
-      - uses: actions/checkout@v3
-      - name: Environment info
-        run: echo $VFLAGS $GITHUB_SHA $GITHUB_REF
-      - name: Build local v
-        run: make -j4
-      - name: v test-cleancode
-        run: ./v test-cleancode
-      - name: v test-fmt
-        run: ./v test-fmt
 
   performance-regressions:
     runs-on: ubuntu-20.04
@@ -47,7 +30,7 @@ jobs:
     env:
       VFLAGS: -cc gcc
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
       - name: Environment info
         run: echo $VFLAGS $GITHUB_SHA $GITHUB_REF
       - name: Build local v
@@ -68,37 +51,32 @@ jobs:
   misc-tooling:
     runs-on: ubuntu-20.04
     if: github.event_name != 'push' || github.event.ref == 'refs/heads/master' || github.event.repository.full_name != 'vlang/v'
-    timeout-minutes: 121
+    timeout-minutes: 120
     env:
       VFLAGS: -cc tcc -no-retry-compilation
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
         with:
           fetch-depth: 10
-
       - name: Install dependencies
         run: |
-          sudo apt-get update
-          sudo apt-get install --quiet -y libsodium-dev libssl-dev sqlite3 libsqlite3-dev postgresql libpq-dev valgrind
-          sudo apt-get install --quiet -y libfreetype6-dev libxi-dev libxcursor-dev libgl-dev xfonts-75dpi xfonts-base
-          sudo apt-get install --quiet -y g++-9 g++-11
-
-      - name: Build v
-        run: make
-
+          # TODO: use cached deps
+          sudo apt update
+          sudo apt install -y -qq libsodium-dev libssl-dev sqlite3 libsqlite3-dev postgresql libpq-dev valgrind
+          sudo apt install -y -qq libfreetype6-dev libxi-dev libxcursor-dev libgl-dev xfonts-75dpi xfonts-base
+          sudo apt install -y -qq g++-9 g++-11
+      - name: Build V
+        run: make -j4
       - name: g++-9 version
         run: g++-9 --version
       - name: V self compilation with g++ and -std=c++11
         run: ./v -cc g++-9 -no-std -cflags -std=c++11 -o v2 cmd/v && ./v2 -cc g++-9 -no-std -cflags -std=c++11 -o v3 cmd/v
-
       - name: g++-11 version
         run: g++-11 --version
       - name: V self compilation with g++ and -std=c++20
         run: ./v -cc g++-11 -no-std -cflags -std=c++20 -o v2 cmd/v && ./v2 -cc g++-11 -no-std -cflags -std=c++20 -o v3 cmd/v
-
       - name: Ensure V can be compiled with -autofree
         run: ./v -autofree -o v2 cmd/v # NB: this does not mean it runs, but at least keeps it from regressing
-
       - name: Shader examples can be built
         run: |
           wget https://github.com/floooh/sokol-tools-bin/raw/6040b18d39649d56dbae2ae1aed59fb755b26369/bin/linux/sokol-shdc
@@ -118,9 +96,9 @@ jobs:
   parser-silent:
     runs-on: ubuntu-20.04
     if: github.event_name != 'push' || github.event.ref == 'refs/heads/master' || github.event.repository.full_name != 'vlang/v'
-    timeout-minutes: 121
+    timeout-minutes: 120
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
       - name: Install zzuf
         run: sudo apt install -qq zzuf
       - name: Build local v
@@ -137,7 +115,6 @@ jobs:
           ./v test-parser -S examples/vmod.v
           ./v test-parser -S examples/regex/regex_example.v
           ./v test-parser -S examples/2048/2048.v
-
       - name: Run test-parser over fuzzed files
         run: |
           zzuf -R '\x00-\x20\x7f-\xff' -r0.01 < examples/hello_world.v > examples/hello_world_fuzz.v

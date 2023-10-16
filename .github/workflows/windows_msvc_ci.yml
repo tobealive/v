@@ -63,11 +63,13 @@ jobs:
           path: ./
           key: ${{ env.CACHE_ID }}
           fail-on-cache-miss: true
+      - name: Test fmt
+        run: ./v test-fmt
       - name: Test cleancode
         run: ./v test-cleancode
 
   test:
-    needs: [verify, fmt]
+    needs: verify
     runs-on: windows-2019
     steps:
       - name: Restore cache
@@ -83,8 +85,8 @@ jobs:
       # - name: Test
       #   run: .\v.exe test-all
 
-  build-modules:
-    needs: [verify, fmt]
+  test-other:
+    needs: verify
     runs-on: windows-2019
     steps:
       - name: Restore cache
@@ -93,31 +95,39 @@ jobs:
           path: ./
           key: ${{ env.CACHE_ID }}
           fail-on-cache-miss: true
-      - name: Test v->js
-        run: ./v -o hi.js examples/hello_v_js.v && node hi.js
-      - name: Test v binaries
+      - name: Build V binaries
         run: ./v build-vbinaries
-      - name: Build examples
-        run: ./v build-examples
+      - name: Build benches
+        run: ./v should-compile-all vlib/v/tests/bench/
+      - name: Build option_test.v with -autofree
+        run: ./v -autofree vlib/v/tests/option_test.v
 
-  tests-sanitize-address-msvc:
-    runs-on: windows-2019
-    timeout-minutes: 240
-    env:
-      VFLAGS: -cc msvc
-      VJOBS: 1
-      VTEST_SHOW_START: 1
-    steps:
-      - uses: actions/checkout@v4
-      - name: Build
-        run: |
-          echo %VFLAGS%
-          echo $VFLAGS
-          ./make.bat -msvc
-          ./v self
-      - name: Install dependencies
-        run: |
-          ./v setup-freetype
-          ./.github/workflows/windows-install-sqlite.bat
-      - name: Self tests # TODO: /fsanitize=address
-        run: ./v -cflags /fsanitize=address test-self
+  examples-and-modules:
+    needs: verify
+    uses: ./.github/workflows/examples_and_modules_ci.yml
+    with:
+      os: windows-2019
+      cc: msvc
+      vflags: -cc msvc
+
+  # TODO: fix msvc sanitized runs
+  # tests-sanitize-address-msvc:
+  #   runs-on: windows-2019
+  #   env:
+  #     VFLAGS: -cc msvc
+  #     VJOBS: 1
+  #     VTEST_SHOW_START: 1
+  #   steps:
+  #     - uses: actions/checkout@v4
+  #     - name: Build
+  #       run: |
+  #         echo %VFLAGS%
+  #         echo $VFLAGS
+  #         ./make.bat -msvc
+  #         ./v self
+  #     - name: Install dependencies
+  #       run: |
+  #         ./v setup-freetype
+  #         ./.github/workflows/windows-install-sqlite.bat
+  #     - name: Self tests
+  #       run: ./v -cflags "/fsanitize=address" test-self

@@ -74,11 +74,13 @@ jobs:
           path: ./
           key: ${{ env.CACHE_ID }}
           fail-on-cache-miss: true
+      - name: Test fmt
+        run: ./v test-fmt
       - name: Test cleancode
         run: ./v test-cleancode
 
   test:
-    needs: [verify, fmt]
+    needs: verify
     runs-on: ubuntu-20.04
     timeout-minutes: 90
     strategy:
@@ -109,81 +111,52 @@ jobs:
             ${{ matrix.env }} ./v ${{ matrix.optimization }} test-self
           fi
 
-  build-modules:
-    needs: [verify, fmt]
-    runs-on: ubuntu-20.04
-    steps:
-      - name: Restore cache
-        uses: actions/cache/restore@v3
-        with:
-          path: ./
-          key: ${{ env.CACHE_ID }}
-          fail-on-cache-miss: true
-      - name: Setup Dependencies
-        uses: awalsh128/cache-apt-pkgs-action@latest
-        with:
-          packages: postgresql libpq-dev libssl-dev sqlite3 libsqlite3-dev valgrind libfreetype6-dev libxi-dev libxcursor-dev libgl-dev
-          version: 1.0
-      - name: Build vpm
-        run: ./v install markdown && git clone --depth 1 https://github.com/vlang/vpm && cd vpm && ../v . || ../v cmd/vpm && cd ..
-      - name: Build examples
-        run: ./v build-examples
-      - name: Build tetris with -autofree
-        run: ./v -autofree -o tetris examples/tetris/tetris.v
-      - name: Build blog tutorial with -autofree
-        run: ./v -autofree -o blog tutorials/building_a_simple_web_blog_with_vweb/code/blog
-      - name: Build modules
-        run: |
-          ./v build-module vlib/os
-          ./v build-module vlib/builtin
-          ./v build-module vlib/strconv
-          ./v build-module vlib/time
-          ./v build-module vlib/term
-          ./v build-module vlib/math
-          ./v build-module vlib/strings
-          ./v build-module vlib/v/token
-          ./v build-module vlib/v/ast
-          ./v build-module vlib/v/parser
-          ./v build-module vlib/v/gen/c
-          ./v build-module vlib/v/depgraph
-          ./v build-module vlib/os/cmdline
-      # - name: Test v binaries
-      #   run: ./v build-vbinaries
-      # - name: Test v->js
-      #   run: ./v -o hi.js examples/hello_v_js.v && node hi.js
-      # - name: Build Vorum
-      #   run: git clone --depth 1 https://github.com/vlang/vorum && cd vorum && ../v . && cd ..
-      - name: Build with -usecache
-        run: |
-          unset VFLAGS
-          ./v -usecache examples/hello_world.v && examples/hello_world
-          ./v  -o v2     -usecache cmd/v
-          ./v2 -o v3     -usecache cmd/v
-          ./v3 version
-          ./v3 -o tetris -usecache examples/tetris/tetris.v
-      - name: Native machine code generation
-        run: |
-          ./v -o vprod -prod cmd/v
-          echo "Generating a 1m line V file..."
-          ./vprod cmd/tools/gen1m.v
-          cmd/tools/gen1m > 1m.v
-          echo "Building it..."
-          ./vprod -backend native -o 1m 1m.v
-          echo "Running it..."
-          ./1m
-          ls
-      - run: ./v -native examples/native/hello_world.v && examples/native/hello_world
-      - name: compile vdoctor.v with -skip-unused and -prod
-        run: ./v -showcc -skip-unused -prod cmd/tools/vdoctor.v
-      - name: compile vup.v with -skip-unused and -prod
-        run: ./v -showcc -skip-unused -prod cmd/tools/vup.v
-      - name: Build option_test.v with -autofree
-        run: ./v -autofree vlib/v/tests/option_test.v
-      - name: Self compile with -parallel-cc
-        run: ./v -o v2 -parallel-cc cmd/v
+  # TODO:
+  # build-modules:
+  #   needs: verify
+  #   runs-on: ubuntu-20.04
+  #   steps:
+  #     - name: Restore cache
+  #       uses: actions/cache/restore@v3
+  #       with:
+  #         path: ./
+  #         key: ${{ env.CACHE_ID }}
+  #         fail-on-cache-miss: true
+  #     - name: Setup Dependencies
+  #       uses: awalsh128/cache-apt-pkgs-action@latest
+  #       with:
+  #         packages: postgresql libpq-dev libssl-dev sqlite3 libsqlite3-dev valgrind libfreetype6-dev libxi-dev libxcursor-dev libgl-dev
+  #         version: 1.0
+  #     # - name: Test v binaries
+  #     #   run: ./v build-vbinaries
+  #     # - name: Test v->js
+  #     #   run: ./v -o hi.js examples/hello_v_js.v && node hi.js
+  #     # - name: Build Vorum
+  #     #   run: git clone --depth 1 https://github.com/vlang/vorum && cd vorum && ../v . && cd ..
+  #     - name: Build option_test.v with -autofree
+  #       run: ./v -autofree vlib/v/tests/option_test.v
+  #     - name: Self compile with -parallel-cc
+  #       run: ./v -o v2 -parallel-cc cmd/v
+
+  examples-and-modules:
+    needs: verify
+    uses: ./.github/workflows/examples_and_modules_ci.yml
+    with:
+      os: ubuntu-20.04
+      cc: gcc
+      vflags: -cc gcc
+
+  apps-and-libraries:
+    needs: verify
+    uses: ./.github/workflows/apps_and_libraries_ci.yml
+    with:
+      os: ubuntu-20.04
+      cc: gcc
+      vflags: -cc gcc
+      vinix: true
 
   san-test:
-    needs: [verify, fmt]
+    needs: verify
     runs-on: ubuntu-20.04
     timeout-minutes: 120
     env:
@@ -215,7 +188,7 @@ jobs:
           fi
 
   san-build-modules:
-    needs: [verify, fmt]
+    needs: verify
     runs-on: ubuntu-20.04
     strategy:
       matrix:
@@ -251,9 +224,8 @@ jobs:
   #     - name: Install dependencies
   #       run: |
   #         sudo apt update
-  #         sudo apt-get install --quiet -y postgresql libpq-dev libssl-dev sqlite3 libsqlite3-dev valgrind
-  #         sudo apt-get install --quiet -y libfreetype6-dev  libxi-dev libxcursor-dev libgl-dev
-  #         sudo apt-get install clang
+  #         sudo apt install -y -qq postgresql libpq-dev libssl-dev sqlite3 libsqlite3-dev valgrind
+  #         sudo apt install -y -qq libfreetype6-dev  libxi-dev libxcursor-dev libgl-dev
   #     - name: Build V
   #       run: make -j4 && ./v -cg -cstrict -o v cmd/v
   #     - name: Self tests (-fsanitize=address)
@@ -279,25 +251,4 @@ jobs:
   # TODO: fix musl compilation
   # musl:
   #   runs-on: ubuntu-20.04
-  #   # if: github.event_name != 'push' || github.event.ref == 'refs/heads/master' || github.event.repository.full_name != 'vlang/v'
-  #   timeout-minutes: 120
-  #   env:
-  #     VFLAGS: -cc musl-gcc
-  #     V_CI_MUSL: 1
-  #   steps:
-  #     - uses: actions/checkout@v4
-  #     - name: Setup Dependencies
-  #       uses: awalsh128/cache-apt-pkgs-action@latest
-  #       with:
-  #         packages: musl musl-tools libssl-dev sqlite3 libsqlite3-dev valgrind libfreetype6-dev libxi-dev libxcursor-dev libgl-dev
-  #         version: 1.0
-  #     - name: Build V
-  #       run: echo $VFLAGS && make -j4 && ./v -showcc -cg -o v cmd/v
-  #     # - name: Test v binaries
-  #     #   run: ./v build-vbinaries
-  #     # - name: Test v->js
-  #     #   run: ./v -o hi.js examples/hello_v_js.v && node hi.js
-  #     - name: Quick debug
-  #       run: ./v -stats vlib/strconv/format_test.v
-  #     - name: Self tests
-  #       run: ./v test-self
+  #   # if: github.event_name != 'push' || github.event.ref ==

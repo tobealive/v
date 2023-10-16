@@ -1,0 +1,140 @@
+name: V Examples and Modules
+
+on:
+  workflow_call:
+    inputs:
+      os:
+        required: true
+        type: string
+      cc:
+        description: 'The compiler used in the calling workflow - required to restore the V cache.'
+        required: true
+        type: string
+      vflags:
+        required: true
+        type: string
+
+env:
+  VFLAGS: ${{ inputs.vflags }}
+
+jobs:
+  examples-and-modules:
+    runs-on: ${{ inputs.os }}
+    if: github.event_name != 'push' || github.event.ref == 'refs/heads/master' || github.event.repository.full_name != 'vlang/v'
+    steps:
+      - name: Restore cache
+        uses: actions/cache/restore@v3
+        with:
+          path: ./
+          key: ${{ runner.os }}-${{ inputs.cc }}-${{ github.sha }}
+          fail-on-cache-miss: true
+      - name: Print System and Environment Info
+        run: ./v doctor
+      - name: Symlink V
+        run: ./v symlink -githubci
+      - name: Build modules
+        run: |
+          v build-module vlib/os
+          v build-module vlib/builtin
+          v build-module vlib/strconv
+          v build-module vlib/time
+          v build-module vlib/term
+          v build-module vlib/math
+          v build-module vlib/strings
+          v build-module vlib/v/token
+          v build-module vlib/v/ast
+          v build-module vlib/v/parser
+          v build-module vlib/v/gen/c
+          v build-module vlib/v/depgraph
+          v build-module vlib/os/cmdline
+        # TODO: install deps once at beginning than always restore cache
+      - name: Setup Dependencies
+        if: runner.os == 'Linux'
+        uses: awalsh128/cache-apt-pkgs-action@latest
+        with:
+          packages: postgresql libpq-dev libssl-dev sqlite3 libsqlite3-dev valgrind libfreetype6-dev libxi-dev libxcursor-dev libgl-dev
+          version: 1.0
+      - name: Build examples
+        run: v build-examples
+      - name: Build tetris with -autofree
+        run: v -autofree -o tetris examples/tetris/tetris.v
+      - name: Build blog tutorial with -autofree
+        run: v -autofree -o blog tutorials/building_a_simple_web_blog_with_vweb/code/blog
+      - name: Build example with -prod
+        run: ./v -prod examples/news_fetcher.v
+      - name: Build with -usecache (Unix-like)
+        if: runner.os != 'Windows'
+        run: |
+          unset VFLAGS
+          v -usecache examples/hello_world.v && examples/hello_world
+          v  -o v2 -usecache cmd/v
+          ./v2 -o v3 -usecache cmd/v
+          ./v3 version
+          ./v3 -o tetris -usecache examples/tetris/tetris.v
+      - name: Build with -usecache (Windows)
+        if: runner.os == 'Windows'
+        run: |
+          Remove-Item Env:VFLAGS
+          v -usecache examples/hello_world.v && examples/hello_world
+          v  -o v2 -usecache cmd/v
+          ./v2 -o v3 -usecache cmd/v
+          ./v3 version
+          ./v3 -o tetris -usecache examples/tetris/tetris.v
+      - name: Run a VSH script
+        if: runner.os != 'Windows'
+        run: ./v run examples/v_script.vsh
+      - name: Native machine code generation
+        if: runner.os != 'macOS'
+        run: |
+          v -o vprod -prod cmd/v
+          echo "Generating a 1m line V file..."
+          ./vprod cmd/tools/gen1m.v
+          cmd/tools/gen1m > 1m.v
+          echo "Building it..."
+          ./vprod -backend native -o 1m 1m.v
+          echo "Running it..."
+          ./1m # Currently segfaults on macOS
+          ls
+      - name: Test v->js
+        run: ./v -o hi.js examples/hello_v_js.v && node hi.js
+      - run: v -native examples/native/hello_world.v && examples/native/hello_world
+      - name: compile vdoctor.v with -skip-unused and -prod
+        run: v -showcc -skip-unused -prod cmd/tools/vdoctor.v
+      - name: compile vup.v with -skip-unused and -prod
+        run: v -showcc -skip-unused -prod cmd/tools/vup.v
+
+  test-time:
+    runs-on: ${{ inputs.os }}
+    steps:
+      - name: Restore cache
+        uses: actions/cache/restore@v3
+        with:
+          path: ./
+          key: ${{ runner.os }}-${{ inputs.cc }}-${{ github.sha }}
+          fail-on-cache-miss: true
+      - name: Test Time (Unix-like)
+        if: runner.os != 'Windows'
+        run: |
+          echo 'Test time functions in a timezone UTC-12'
+          TZ=Etc/GMT+12 ./v test vlib/time/
+          echo 'Test time functions in a timezone UTC-3'
+          TZ=Etc/GMT+3 ./v test vlib/time/
+          echo 'Test time functions in a timezone UTC+3'
+          TZ=Etc/GMT-3 ./v test vlib/time/
+          echo 'Test time functions in a timezone UTC+12'
+          TZ=Etc/GMT-12 ./v test vlib/time/
+          echo 'Test time functions in a timezone using daylight saving (Europe/Paris)'
+          TZ=Europe/Paris ./v test vlib/time/
+      - name: Test Time (Windows)
+        if: runner.os == 'Windows'
+        run: |
+          echo 'Test time functions in a timezone UTC-12'
+          tzutil /s "Dateline Standard Time" && ./v test vlib/time/
+          echo 'Test time functions in a timezone UTC-3'
+          tzutil /s "Greenland Standard Time" && ./v test vlib/time/
+          echo 'Test time functions in a timezone UTC+3'
+          tzutil /s "Russian Standard Time" && ./v test vlib/time/
+          echo 'Test time functions in a timezone UTC+12'
+          tzutil /s "New Zealand Standard Time" && ./v test vlib/time/
+          echo 'Test time functions in a timezone using daylight saving (Europe/Paris)'
+          tzutil /s "W. Europe Standard Time" && ./v test vlib/time/
