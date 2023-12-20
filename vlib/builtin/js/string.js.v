@@ -290,9 +290,7 @@ pub fn (s string) trim_right(cutset string) string {
 	if s.len < 1 || cutset.len < 1 {
 		return s.clone()
 	}
-
 	mut pos := s.len - 1
-
 	for pos >= 0 {
 		mut found := false
 		for cs in cutset {
@@ -305,11 +303,9 @@ pub fn (s string) trim_right(cutset string) string {
 		}
 		pos--
 	}
-
 	if pos < 0 {
 		return ''
 	}
-
 	return s[..pos + 1]
 }
 
@@ -340,19 +336,13 @@ pub fn (s string) trim_left(cutset string) string {
 // trim_string_left strips `str` from the start of the string.
 // Example: assert 'WorldHello V'.trim_string_left('World') == 'Hello V'
 pub fn (s string) trim_string_left(str string) string {
-	if s.starts_with(str) {
-		return s[str.len..]
-	}
-	return s.clone()
+	return if s.starts_with(str) { s[str.len..] } else { s.clone() }
 }
 
 // trim_string_right strips `str` from the end of the string.
 // Example: assert 'Hello VWorld'.trim_string_right('World') == 'Hello V'
 pub fn (s string) trim_string_right(str string) string {
-	if s.ends_with(str) {
-		return s[..s.len - str.len]
-	}
-	return s.clone()
+	return if s.ends_with(str) { s[..s.len - str.len] } else { s.clone() }
 }
 
 // compare_strings returns `-1` if `a < b`, `1` if `a > b` else `0`.

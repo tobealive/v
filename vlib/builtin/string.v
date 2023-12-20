@@ -1702,19 +1702,13 @@ pub fn (s string) trim_right(cutset string) string {
 // trim_string_left strips `str` from the start of the string.
 // Example: assert 'WorldHello V'.trim_string_left('World') == 'Hello V'
 pub fn (s string) trim_string_left(str string) string {
-	if s.starts_with(str) {
-		return s[str.len..]
-	}
-	return s.clone()
+	return if s.starts_with(str) { s[str.len..] } else { s.clone() }
 }
 
 // trim_string_right strips `str` from the end of the string.
 // Example: assert 'Hello VWorld'.trim_string_right('World') == 'Hello V'
 pub fn (s string) trim_string_right(str string) string {
-	if s.ends_with(str) {
-		return s[..s.len - str.len]
-	}
-	return s.clone()
+	return if s.ends_with(str) { s[..s.len - str.len] } else { s.clone() }
 }
 
 // compare_strings returns `-1` if `a < b`, `1` if `a > b` else `0`.
