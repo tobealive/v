@@ -283,6 +283,30 @@ pub fn (s string) u8() u64 {
 	return res
 }
 
+// trim_left strips any of the characters given in `cutset` from the left of the string.
+// Example: assert 'd Hello V developer'.trim_left(' d') == 'Hello V developer'
+@[direct_array_access]
+pub fn (s string) trim_left(cutset string) string {
+	if s.len < 1 || cutset.len < 1 {
+		return s.clone()
+	}
+	mut pos := 0
+	for pos < s.len {
+		mut found := false
+		for cs in cutset {
+			if s[pos] == cs {
+				found = true
+				break
+			}
+		}
+		if !found {
+			break
+		}
+		pos++
+	}
+	return s[pos..]
+}
+
 // trim_right strips any of the characters given in `cutset` from the right of the string.
 // Example: assert ' Hello V d'.trim_right(' d') == ' Hello V'
 @[direct_array_access]
@@ -307,30 +331,6 @@ pub fn (s string) trim_right(cutset string) string {
 		return ''
 	}
 	return s[..pos + 1]
-}
-
-// trim_left strips any of the characters given in `cutset` from the left of the string.
-// Example: assert 'd Hello V developer'.trim_left(' d') == 'Hello V developer'
-@[direct_array_access]
-pub fn (s string) trim_left(cutset string) string {
-	if s.len < 1 || cutset.len < 1 {
-		return s.clone()
-	}
-	mut pos := 0
-	for pos < s.len {
-		mut found := false
-		for cs in cutset {
-			if s[pos] == cs {
-				found = true
-				break
-			}
-		}
-		if !found {
-			break
-		}
-		pos++
-	}
-	return s[pos..]
 }
 
 // trim_string_left strips `str` from the start of the string.
