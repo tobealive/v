@@ -59,7 +59,7 @@ jobs:
       fail-fast: false
     runs-on: ${{ matrix.os }}
     env:
-      VFLAGS: -cc ${{ matrix.cc }} -d network -stats
+      VFLAGS: -cc ${{ matrix.cc }} -d network
     steps:
       - name: Restore V cache
         uses: actions/cache/restore@v3
@@ -67,4 +67,4 @@ jobs:
           path: vlang
           key: ${{ runner.os }}-${{ github.sha }}
       - name: Test
-        run: cd vlang && ./v test cmd/tools/vpm/remove_test.v
+        run: cd vlang && ./v -stats test cmd/tools/vpm/remove_test.v
