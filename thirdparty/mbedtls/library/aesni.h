@@ -35,9 +35,9 @@
 /* Can we do AESNI with inline assembly?
  * (Only implemented with gas syntax, only for 64-bit.)
  */
-#if defined(MBEDTLS_HAVE_ASM) && defined(__GNUC__) && \
+#if defined(MBEDTLS_HAVE_ASM) && !defined(MBEDTLS_HAVE_X86_64) && \
     (defined(__amd64__) || defined(__x86_64__))   &&  \
-    !defined(MBEDTLS_HAVE_X86_64)
+    defined(__GNUC__) && !defined(__TINYC__)
 #define MBEDTLS_HAVE_X86_64
 #endif
 
