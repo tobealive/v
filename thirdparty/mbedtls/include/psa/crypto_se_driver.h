@@ -17,7 +17,19 @@
 
 /*
  *  Copyright The Mbed TLS Contributors
- *  SPDX-License-Identifier: Apache-2.0 OR GPL-2.0-or-later
+ *  SPDX-License-Identifier: Apache-2.0
+ *
+ *  Licensed under the Apache License, Version 2.0 (the "License"); you may
+ *  not use this file except in compliance with the License.
+ *  You may obtain a copy of the License at
+ *
+ *  http://www.apache.org/licenses/LICENSE-2.0
+ *
+ *  Unless required by applicable law or agreed to in writing, software
+ *  distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+ *  WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  See the License for the specific language governing permissions and
+ *  limitations under the License.
  */
 #ifndef PSA_CRYPTO_SE_DRIVER_H
 #define PSA_CRYPTO_SE_DRIVER_H
@@ -126,7 +138,7 @@ typedef psa_status_t (*psa_drv_se_init_t)(psa_drv_se_context_t *drv_context,
                                           psa_key_location_t location);
 
 #if defined(__DOXYGEN_ONLY__) || !defined(MBEDTLS_PSA_CRYPTO_SE_C)
-/* Mbed TLS with secure element support enabled defines this type in
+/* Mbed Crypto with secure element support enabled defines this type in
  * crypto_types.h because it is also visible to applications through an
  * implementation-specific extension.
  * For the PSA Cryptography specification, this type is only visible
@@ -825,7 +837,7 @@ typedef enum {
      * and #PSA_ERROR_DOES_NOT_EXIST if the driver can determine that there
      * is no key with the specified slot number.
      *
-     * This is an Mbed TLS extension.
+     * This is an Mbed Crypto extension.
      */
     PSA_KEY_CREATION_REGISTER,
 #endif

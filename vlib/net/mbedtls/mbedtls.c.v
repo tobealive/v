@@ -42,6 +42,7 @@ $if prod && opt_size ? {
 #flag @VEXEROOT/thirdparty/mbedtls/library/entropy_poll.o
 #flag @VEXEROOT/thirdparty/mbedtls/library/error.o
 #flag @VEXEROOT/thirdparty/mbedtls/library/gcm.o
+#flag @VEXEROOT/thirdparty/mbedtls/library/hash_info.o
 #flag @VEXEROOT/thirdparty/mbedtls/library/hkdf.o
 #flag @VEXEROOT/thirdparty/mbedtls/library/hmac_drbg.o
 #flag @VEXEROOT/thirdparty/mbedtls/library/md.o
@@ -66,9 +67,8 @@ $if prod && opt_size ? {
 #flag @VEXEROOT/thirdparty/mbedtls/library/psa_crypto_aead.o
 #flag @VEXEROOT/thirdparty/mbedtls/library/psa_crypto_cipher.o
 #flag @VEXEROOT/thirdparty/mbedtls/library/psa_crypto_client.o
-#flag @VEXEROOT/thirdparty/mbedtls/library/psa_crypto_driver_wrappers_no_static.o
+#flag @VEXEROOT/thirdparty/mbedtls/library/psa_crypto_driver_wrappers.o
 #flag @VEXEROOT/thirdparty/mbedtls/library/psa_crypto_ecp.o
-#flag @VEXEROOT/thirdparty/mbedtls/library/psa_crypto_ffdh.o
 #flag @VEXEROOT/thirdparty/mbedtls/library/psa_crypto_hash.o
 #flag @VEXEROOT/thirdparty/mbedtls/library/psa_crypto_mac.o
 #flag @VEXEROOT/thirdparty/mbedtls/library/psa_crypto_pake.o
@@ -82,7 +82,6 @@ $if prod && opt_size ? {
 #flag @VEXEROOT/thirdparty/mbedtls/library/rsa.o
 #flag @VEXEROOT/thirdparty/mbedtls/library/rsa_alt_helpers.o
 #flag @VEXEROOT/thirdparty/mbedtls/library/sha1.o
-#flag @VEXEROOT/thirdparty/mbedtls/library/sha3.o
 #flag @VEXEROOT/thirdparty/mbedtls/library/sha256.o
 #flag @VEXEROOT/thirdparty/mbedtls/library/sha512.o
 #flag @VEXEROOT/thirdparty/mbedtls/library/ssl_debug_helpers_generated.o
@@ -112,7 +111,6 @@ $if prod && opt_size ? {
 #flag @VEXEROOT/thirdparty/mbedtls/library/ssl_tls13_client.o
 #flag @VEXEROOT/thirdparty/mbedtls/library/ssl_tls13_server.o
 #flag @VEXEROOT/thirdparty/mbedtls/library/ssl_tls13_generic.o
-#flag @VEXEROOT/thirdparty/mbedtls/library/x509write.o
 #flag @VEXEROOT/thirdparty/mbedtls/library/x509write_crt.o
 #flag @VEXEROOT/thirdparty/mbedtls/library/x509write_csr.o
 #flag @VEXEROOT/thirdparty/mbedtls/3rdparty/everest/library/everest.o

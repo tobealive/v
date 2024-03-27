@@ -5,7 +5,19 @@
  */
 /*
  *  Copyright The Mbed TLS Contributors
- *  SPDX-License-Identifier: Apache-2.0 OR GPL-2.0-or-later
+ *  SPDX-License-Identifier: Apache-2.0
+ *
+ *  Licensed under the Apache License, Version 2.0 (the "License"); you may
+ *  not use this file except in compliance with the License.
+ *  You may obtain a copy of the License at
+ *
+ *  http://www.apache.org/licenses/LICENSE-2.0
+ *
+ *  Unless required by applicable law or agreed to in writing, software
+ *  distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+ *  WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  See the License for the specific language governing permissions and
+ *  limitations under the License.
  */
 #ifndef MBEDTLS_ASN1_H
 #define MBEDTLS_ASN1_H
@@ -84,14 +96,15 @@
 
 /* Slightly smaller way to check if tag is a string tag
  * compared to canonical implementation. */
-#define MBEDTLS_ASN1_IS_STRING_TAG(tag)                                \
-    ((unsigned int) (tag) < 32u && (                                   \
+#define MBEDTLS_ASN1_IS_STRING_TAG(tag)                                     \
+    ((tag) < 32u && (                                                      \
          ((1u << (tag)) & ((1u << MBEDTLS_ASN1_BMP_STRING)       |     \
                            (1u << MBEDTLS_ASN1_UTF8_STRING)      |     \
                            (1u << MBEDTLS_ASN1_T61_STRING)       |     \
                            (1u << MBEDTLS_ASN1_IA5_STRING)       |     \
                            (1u << MBEDTLS_ASN1_UNIVERSAL_STRING) |     \
-                           (1u << MBEDTLS_ASN1_PRINTABLE_STRING))) != 0))
+                           (1u << MBEDTLS_ASN1_PRINTABLE_STRING) |     \
+                           (1u << MBEDTLS_ASN1_BIT_STRING))) != 0))
 
 /*
  * Bit masks for each of the components of an ASN.1 tag as specified in
@@ -197,7 +210,6 @@ typedef struct mbedtls_asn1_named_data {
 }
 mbedtls_asn1_named_data;
 
-#if defined(MBEDTLS_ASN1_PARSE_C) || defined(MBEDTLS_X509_CREATE_C)
 /**
  * \brief       Get the length of an ASN.1 element.
  *              Updates the pointer to immediately behind the length.
@@ -244,9 +256,7 @@ int mbedtls_asn1_get_len(unsigned char **p,
 int mbedtls_asn1_get_tag(unsigned char **p,
                          const unsigned char *end,
                          size_t *len, int tag);
-#endif /* MBEDTLS_ASN1_PARSE_C || MBEDTLS_X509_CREATE_C */
 
-#if defined(MBEDTLS_ASN1_PARSE_C)
 /**
  * \brief       Retrieve a boolean ASN.1 tag and its value.
  *              Updates the pointer to immediately behind the full tag.
@@ -464,7 +474,7 @@ void mbedtls_asn1_sequence_free(mbedtls_asn1_sequence *seq);
  *                       on a successful invocation.
  * \param end            The end of the ASN.1 SEQUENCE container.
  * \param tag_must_mask  A mask to be applied to the ASN.1 tags found within
- *                       the SEQUENCE before comparing to \p tag_must_val.
+ *                       the SEQUENCE before comparing to \p tag_must_value.
  * \param tag_must_val   The required value of each ASN.1 tag found in the
  *                       SEQUENCE, after masking with \p tag_must_mask.
  *                       Mismatching tags lead to an error.
@@ -473,7 +483,7 @@ void mbedtls_asn1_sequence_free(mbedtls_asn1_sequence *seq);
  *                       while a value of \c 0xFF for \p tag_must_mask means
  *                       that \p tag_must_val is the only allowed tag.
  * \param tag_may_mask   A mask to be applied to the ASN.1 tags found within
- *                       the SEQUENCE before comparing to \p tag_may_val.
+ *                       the SEQUENCE before comparing to \p tag_may_value.
  * \param tag_may_val    The desired value of each ASN.1 tag found in the
  *                       SEQUENCE, after masking with \p tag_may_mask.
  *                       Mismatching tags will be silently ignored.
@@ -635,7 +645,5 @@ void mbedtls_asn1_free_named_data_list_shallow(mbedtls_asn1_named_data *name);
 #ifdef __cplusplus
 }
 #endif
-
-#endif /* MBEDTLS_ASN1_PARSE_C */
 
 #endif /* asn1.h */

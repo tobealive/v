@@ -2,7 +2,19 @@
  *  FIPS-180-2 compliant SHA-256 implementation
  *
  *  Copyright The Mbed TLS Contributors
- *  SPDX-License-Identifier: Apache-2.0 OR GPL-2.0-or-later
+ *  SPDX-License-Identifier: Apache-2.0
+ *
+ *  Licensed under the Apache License, Version 2.0 (the "License"); you may
+ *  not use this file except in compliance with the License.
+ *  You may obtain a copy of the License at
+ *
+ *  http://www.apache.org/licenses/LICENSE-2.0
+ *
+ *  Unless required by applicable law or agreed to in writing, software
+ *  distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+ *  WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  See the License for the specific language governing permissions and
+ *  limitations under the License.
  */
 /*
  *  The SHA-256 Secure Hash Standard was published by NIST in 2002.
@@ -45,26 +57,11 @@
 #include "mbedtls/platform.h"
 
 #if defined(__aarch64__)
-
 #  if defined(MBEDTLS_SHA256_USE_A64_CRYPTO_IF_PRESENT) || \
     defined(MBEDTLS_SHA256_USE_A64_CRYPTO_ONLY)
-
 /* *INDENT-OFF* */
-
-#   ifdef __ARM_NEON
-#       include <arm_neon.h>
-#   else
-#       error "Target does not support NEON instructions"
-#   endif
-
 #    if !defined(__ARM_FEATURE_CRYPTO) || defined(MBEDTLS_ENABLE_ARM_CRYPTO_EXTENSIONS_COMPILER_FLAG)
-#      if defined(__ARMCOMPILER_VERSION)
-#        if __ARMCOMPILER_VERSION <= 6090000
-#          error "Must use minimum -march=armv8-a+crypto for MBEDTLS_SHA256_USE_A64_CRYPTO_*"
-#        endif
-#          pragma clang attribute push (__attribute__((target("sha2"))), apply_to=function)
-#          define MBEDTLS_POP_TARGET_PRAGMA
-#      elif defined(__clang__)
+#      if defined(__clang__)
 #        if __clang_major__ < 4
 #          error "A more recent Clang is required for MBEDTLS_SHA256_USE_A64_CRYPTO_*"
 #        endif
@@ -86,7 +83,7 @@
 #      endif
 #    endif
 /* *INDENT-ON* */
-
+#    include <arm_neon.h>
 #  endif
 #  if defined(MBEDTLS_SHA256_USE_A64_CRYPTO_IF_PRESENT)
 #    if defined(__unix__)
@@ -402,8 +399,6 @@ int mbedtls_internal_sha256_process_a64_crypto(mbedtls_sha256_context *ctx,
             SHA256_BLOCK_SIZE) ? 0 : -1;
 }
 
-#endif /* MBEDTLS_SHA256_USE_A64_CRYPTO_IF_PRESENT || MBEDTLS_SHA256_USE_A64_CRYPTO_ONLY */
-
 #if defined(MBEDTLS_POP_TARGET_PRAGMA)
 #if defined(__clang__)
 #pragma clang attribute pop
@@ -412,6 +407,8 @@ int mbedtls_internal_sha256_process_a64_crypto(mbedtls_sha256_context *ctx,
 #endif
 #undef MBEDTLS_POP_TARGET_PRAGMA
 #endif
+
+#endif /* MBEDTLS_SHA256_USE_A64_CRYPTO_IF_PRESENT || MBEDTLS_SHA256_USE_A64_CRYPTO_ONLY */
 
 #if !defined(MBEDTLS_SHA256_USE_A64_CRYPTO_IF_PRESENT)
 #define mbedtls_internal_sha256_process_many_c mbedtls_internal_sha256_process_many
@@ -669,7 +666,6 @@ int mbedtls_sha256_finish(mbedtls_sha256_context *ctx,
     int ret = MBEDTLS_ERR_ERROR_CORRUPTION_DETECTED;
     uint32_t used;
     uint32_t high, low;
-    int truncated = 0;
 
     /*
      * Add padding: 0x80 then 0x00 until 8 bytes remain for the length
@@ -686,7 +682,7 @@ int mbedtls_sha256_finish(mbedtls_sha256_context *ctx,
         memset(ctx->buffer + used, 0, SHA256_BLOCK_SIZE - used);
 
         if ((ret = mbedtls_internal_sha256_process(ctx, ctx->buffer)) != 0) {
-            goto exit;
+            return ret;
         }
 
         memset(ctx->buffer, 0, 56);
@@ -703,7 +699,7 @@ int mbedtls_sha256_finish(mbedtls_sha256_context *ctx,
     MBEDTLS_PUT_UINT32_BE(low,  ctx->buffer, 60);
 
     if ((ret = mbedtls_internal_sha256_process(ctx, ctx->buffer)) != 0) {
-        goto exit;
+        return ret;
     }
 
     /*
@@ -717,6 +713,7 @@ int mbedtls_sha256_finish(mbedtls_sha256_context *ctx,
     MBEDTLS_PUT_UINT32_BE(ctx->state[5], output, 20);
     MBEDTLS_PUT_UINT32_BE(ctx->state[6], output, 24);
 
+    int truncated = 0;
 #if defined(MBEDTLS_SHA224_C)
     truncated = ctx->is224;
 #endif
@@ -724,11 +721,7 @@ int mbedtls_sha256_finish(mbedtls_sha256_context *ctx,
         MBEDTLS_PUT_UINT32_BE(ctx->state[7], output, 28);
     }
 
-    ret = 0;
-
-exit:
-    mbedtls_sha256_free(ctx);
-    return ret;
+    return 0;
 }
 
 #endif /* !MBEDTLS_SHA256_ALT */

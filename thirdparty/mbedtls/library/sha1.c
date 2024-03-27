@@ -2,7 +2,19 @@
  *  FIPS-180-1 compliant SHA-1 implementation
  *
  *  Copyright The Mbed TLS Contributors
- *  SPDX-License-Identifier: Apache-2.0 OR GPL-2.0-or-later
+ *  SPDX-License-Identifier: Apache-2.0
+ *
+ *  Licensed under the Apache License, Version 2.0 (the "License"); you may
+ *  not use this file except in compliance with the License.
+ *  You may obtain a copy of the License at
+ *
+ *  http://www.apache.org/licenses/LICENSE-2.0
+ *
+ *  Unless required by applicable law or agreed to in writing, software
+ *  distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+ *  WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  See the License for the specific language governing permissions and
+ *  limitations under the License.
  */
 /*
  *  The SHA-1 standard was published by NIST in 1993.
@@ -310,7 +322,7 @@ int mbedtls_sha1_finish(mbedtls_sha1_context *ctx,
         memset(ctx->buffer + used, 0, 64 - used);
 
         if ((ret = mbedtls_internal_sha1_process(ctx, ctx->buffer)) != 0) {
-            goto exit;
+            return ret;
         }
 
         memset(ctx->buffer, 0, 56);
@@ -327,7 +339,7 @@ int mbedtls_sha1_finish(mbedtls_sha1_context *ctx,
     MBEDTLS_PUT_UINT32_BE(low,  ctx->buffer, 60);
 
     if ((ret = mbedtls_internal_sha1_process(ctx, ctx->buffer)) != 0) {
-        goto exit;
+        return ret;
     }
 
     /*
@@ -339,11 +351,7 @@ int mbedtls_sha1_finish(mbedtls_sha1_context *ctx,
     MBEDTLS_PUT_UINT32_BE(ctx->state[3], output, 12);
     MBEDTLS_PUT_UINT32_BE(ctx->state[4], output, 16);
 
-    ret = 0;
-
-exit:
-    mbedtls_sha1_free(ctx);
-    return ret;
+    return 0;
 }
 
 #endif /* !MBEDTLS_SHA1_ALT */
@@ -374,6 +382,7 @@ int mbedtls_sha1(const unsigned char *input,
 
 exit:
     mbedtls_sha1_free(&ctx);
+
     return ret;
 }
 
