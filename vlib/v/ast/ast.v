@@ -7,8 +7,6 @@ import v.token
 import v.errors
 import v.pref
 
-pub type TypeDecl = AliasTypeDecl | FnTypeDecl | SumTypeDecl
-
 pub type Expr = AnonFn
 	| ArrayDecompose
 	| ArrayInit
@@ -1355,25 +1353,29 @@ pub:
 	pos              token.Pos
 }
 
-pub struct AliasTypeDecl {
+pub type TypeDecl = AliasTypeDecl | FnTypeDecl | SumTypeDecl
+
+struct TypeDeclData {
 pub:
+	typ         Type
+	pos         token.Pos
 	name        string
 	is_pub      bool
-	typ         Type
+}
+
+pub struct AliasTypeDecl {
+	TypeDeclData
+pub:
 	parent_type Type
-	pos         token.Pos
 	type_pos    token.Pos
 	comments    []Comment
 }
 
 // SumTypeDecl is the ast node for `type MySumType = string | int`
 pub struct SumTypeDecl {
+	TypeDeclData
 pub:
-	name          string
-	is_pub        bool
-	pos           token.Pos
 	name_pos      token.Pos
-	typ           Type
 	generic_types []Type
 	attrs         []Attr // attributes of type declaration
 pub mut:
@@ -1381,11 +1383,8 @@ pub mut:
 }
 
 pub struct FnTypeDecl {
+	TypeDeclData
 pub:
-	name          string
-	is_pub        bool
-	typ           Type
-	pos           token.Pos
 	type_pos      token.Pos
 	comments      []Comment
 	generic_types []Type
