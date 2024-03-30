@@ -1357,10 +1357,10 @@ pub type TypeDecl = AliasTypeDecl | FnTypeDecl | SumTypeDecl
 
 struct TypeDeclData {
 pub:
-	typ         Type
-	pos         token.Pos
-	name        string
-	is_pub      bool
+	typ    Type
+	pos    token.Pos
+	name   string
+	is_pub bool
 }
 
 pub struct AliasTypeDecl {

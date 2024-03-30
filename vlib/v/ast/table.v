@@ -761,7 +761,7 @@ fn (mut t Table) rewrite_already_registered_symbol(typ TypeSymbol, existing_idx 
 		}
 		return existing_idx
 	}
-	return ast.invalid_type_idx
+	return invalid_type_idx
 }
 
 @[inline]
