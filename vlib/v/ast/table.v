@@ -75,7 +75,6 @@ pub fn (mut t Table) free() {
 	}
 }
 
-pub const invalid_type_idx = -1
 pub const fn_type_escape_seq = [' ', '', '(', '_', ')', '']
 pub const map_cname_escape_seq = ['[', '_T_', ', ', '_', ']', '']
 

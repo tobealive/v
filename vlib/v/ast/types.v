@@ -590,6 +590,7 @@ pub fn (typ Type) is_bool() bool {
 	return typ.idx() == ast.bool_type_idx
 }
 
+pub const invalid_type_idx = -1
 pub const void_type_idx = 1
 pub const voidptr_type_idx = 2
 pub const byteptr_type_idx = 3
@@ -627,6 +628,9 @@ pub const builtin_type_names = ['void', 'voidptr', 'byteptr', 'charptr', 'i8', '
 	'isize', 'u8', 'u16', 'u32', 'u64', 'usize', 'f32', 'f64', 'char', 'bool', 'none', 'string',
 	'rune', 'array', 'map', 'chan', 'any', 'float_literal', 'int_literal', 'thread', 'Error', 'nil',
 	'i32']
+
+// pub const int_type_name = $if amd64 || arm64 {
+pub const int_type_name = $if new_int ? { 'i64' } $else { 'int' }
 
 pub const builtin_type_names_matcher = token.new_keywords_matcher_from_array_trie(builtin_type_names)
 

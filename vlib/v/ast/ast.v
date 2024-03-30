@@ -9,14 +9,6 @@ import v.pref
 
 pub type TypeDecl = AliasTypeDecl | FnTypeDecl | SumTypeDecl
 
-// pub const int_type_name = $if amd64 || arm64 {
-pub const int_type_name = $if new_int ? {
-	//'int'
-	'i64'
-} $else {
-	'int'
-}
-
 pub type Expr = AnonFn
 	| ArrayDecompose
 	| ArrayInit
