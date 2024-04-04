@@ -5522,13 +5522,28 @@ Struct field deprecations:
 ```v oksyntax
 module abc
 
-// Note that only *direct* accesses to Xyz.d in *other modules*, will produce deprecation notices/warnings:
 pub struct Xyz {
 pub mut:
 	a int
 	d int @[deprecated: 'use Xyz.a instead'; deprecated_after: '2999-03-01']
-	// the tags above, will produce a notice, since the deprecation date is in the far future
+	// will produce a notice, since the deprecation date is in the far future
+	e int @[deprecated: 'use Xyz.a instead'; deprecated_after: '2023-12-31']
+	// will produce a warning/error, since the deprecation date is in the past
 }
+```
+
+```v ignore
+import abc
+
+// In other modules, initiating Xyz with a deprecated filed or *directly*
+// accessing a deprecated field, will produce deprecation notices/warnings:
+d := abc.Xyz{
+	d: 1 // notice: field `d` will be deprecated after 2999-03-01, it will become an error after 2999-08-28; ...
+}
+
+a := abc.Xyz{}
+println(a.e)
+// warning: `e` has been deprecated since 2023-12-31, it will be an error after 2024-06-28; use a instead
 ```
 
 Function/method deprecations:
