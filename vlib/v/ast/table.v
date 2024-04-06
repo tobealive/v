@@ -677,13 +677,12 @@ pub fn (t &Table) sym_by_idx(idx int) &TypeSymbol {
 
 pub fn (t &Table) sym(typ Type) &TypeSymbol {
 	idx := typ.idx()
-	if idx > 0 {
-		return t.type_symbols[idx]
+	if idx == 0 {
+		// this should never happen
+		t.panic('sym: invalid type (typ=${typ} idx=${idx}). Compiler bug. This should never happen. Please report the bug using `v bug file.v`.')
+		return invalid_type_symbol
 	}
-	// this should never happen
-	t.panic('sym: invalid type (typ=${typ} idx=${idx}). Compiler bug. This should never happen. Please report the bug using `v bug file.v`.
-')
-	return ast.invalid_type_symbol
+	return t.type_symbols[idx] or { return invalid_type_symbol }
 }
 
 // final_sym follows aliases until it gets to a "real" Type
