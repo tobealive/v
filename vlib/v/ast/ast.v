@@ -923,15 +923,15 @@ pub:
 	nr_lines      int    // number of source code lines in the file (including newlines and comments)
 	nr_bytes      int    // number of processed source code bytes
 	mod           Module // the module of the source file (from `module xyz` at the top)
-	global_scope  &Scope = unsafe { nil }
-	is_test       bool // true for _test.v files
-	is_generated  bool // true for `[generated] module xyz` files; turn off notices
-	is_translated bool // true for `[translated] module xyz` files; turn off some checks
+	is_test       bool   // true for _test.v files
+	is_generated  bool   // true for `[generated] module xyz` files; turn off notices
+	is_translated bool   // true for `[translated] module xyz` files; turn off some checks
 pub mut:
 	idx              int    // index in an external container; can be used to refer to the file in a more efficient way, just by its integer index
 	path             string // absolute path of the source file - '/projects/v/file.v'
 	path_base        string // file name - 'file.v' (useful for tracing)
 	scope            &Scope = unsafe { nil }
+	global_scope     &Scope = unsafe { nil }
 	stmts            []Stmt            // all the statements in the source file
 	imports          []Import          // all the imports
 	auto_imports     []string          // imports that were implicitly added
