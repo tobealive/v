@@ -162,7 +162,26 @@ fn (foptions &FormatOptions) vlog(msg string) {
 fn (foptions &FormatOptions) format_file(file string) {
 	foptions.vlog('vfmt2 running fmt.fmt over file: ${file}')
 	prefs, mut table := setup_preferences_and_table()
-	file_ast := parser.parse_file(file, mut table, .parse_comments, prefs)
+	mut file_ast := parser.parse_file(file, mut table, .parse_comments, prefs)
+	if file_ast.mod.name != 'main' {
+		file_dir := os.dir(file)
+		mod_files := os.ls(file_dir) or { []string{} }
+		for f in mod_files {
+			if os.file_ext(f) != '.v' || f == file {
+				continue
+			}
+			mut t := ast.new_table()
+			f_ast := parser.parse_file(os.join_path(file_dir, f), mut t, .skip_comments,
+				prefs)
+			if f_ast.mod.name == file_ast.mod.name {
+				for k, o in f_ast.global_scope.objects {
+					if k !in file_ast.global_scope.objects {
+						file_ast.global_scope.objects[k] = o
+					}
+				}
+			}
+		}
+	}
 	// checker.new_checker(table, prefs).check(file_ast)
 	formatted_content := fmt.fmt(file_ast, mut table, prefs, foptions.is_debug)
 	file_name := os.file_name(file)
