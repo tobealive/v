@@ -65,7 +65,7 @@ pub fn post(url string, data string) !Response {
 		method: .post
 		url: url
 		data: data
-		header: new_header(key: .content_type, value: http.content_type_default)
+		header: new_header(key: .content_type, value: content_type_default)
 	)
 }
 
@@ -129,7 +129,7 @@ pub fn put(url string, data string) !Response {
 		method: .put
 		url: url
 		data: data
-		header: new_header(key: .content_type, value: http.content_type_default)
+		header: new_header(key: .content_type, value: content_type_default)
 	)
 }
 
@@ -139,7 +139,7 @@ pub fn patch(url string, data string) !Response {
 		method: .patch
 		url: url
 		data: data
-		header: new_header(key: .content_type, value: http.content_type_default)
+		header: new_header(key: .content_type, value: content_type_default)
 	)
 }
 

@@ -25,8 +25,8 @@ fn (mut p Parser) check_undefined_variables(names []string, val ast.Expr) ! {
 	defer {
 		p.expr_level--
 	}
-	if p.expr_level > parser.max_expr_level {
-		return error('expr level > ${parser.max_expr_level}')
+	if p.expr_level > max_expr_level {
+		return error('expr level > ${max_expr_level}')
 	}
 	match val {
 		ast.Ident {

@@ -354,7 +354,7 @@ pub fn (mut c Checker) check_files(ast_files []&ast.File) {
 	// is needed when the generic type is auto inferred from the call argument.
 	// we may have to loop several times, if there were more concrete types found.
 	mut post_process_generic_fns_iterations := 0
-	post_process_iterations_loop: for post_process_generic_fns_iterations <= checker.generic_fn_postprocess_iterations_cutoff_limit {
+	post_process_iterations_loop: for post_process_generic_fns_iterations <= generic_fn_postprocess_iterations_cutoff_limit {
 		$if trace_post_process_generic_fns_loop ? {
 			eprintln('>>>>>>>>> recheck_generic_fns loop iteration: ${post_process_generic_fns_iterations}')
 		}
@@ -720,7 +720,7 @@ and use a reference to the sum type instead: `var := &${node.name}(${variant_nam
 
 fn (mut c Checker) expand_iface_embeds(idecl &ast.InterfaceDecl, level int, iface_embeds []ast.InterfaceEmbedding) []ast.InterfaceEmbedding {
 	// eprintln('> expand_iface_embeds: idecl.name: $idecl.name | level: $level | iface_embeds.len: $iface_embeds.len')
-	if level > checker.iface_level_cutoff_limit {
+	if level > iface_level_cutoff_limit {
 		c.error('too many interface embedding levels: ${level}, for interface `${idecl.name}`',
 			idecl.pos)
 		return []
@@ -1716,7 +1716,7 @@ fn (mut c Checker) const_decl(mut node ast.ConstDecl) {
 		c.warn('const block must have at least 1 declaration', node.pos)
 	}
 	for mut field in node.fields {
-		if checker.reserved_type_names_chk.matches(util.no_cur_mod(field.name, c.mod)) {
+		if reserved_type_names_chk.matches(util.no_cur_mod(field.name, c.mod)) {
 			c.error('invalid use of reserved type `${field.name}` as a const name', field.pos)
 		}
 		// TODO: Check const name once the syntax is decided
@@ -1780,7 +1780,7 @@ fn (mut c Checker) const_decl(mut node ast.ConstDecl) {
 				mut is_large := field.expr.val.len > 13
 				if !is_large && field.expr.val.len > 8 {
 					val := field.expr.val.i64()
-					is_large = val > checker.int_max || val < checker.int_min
+					is_large = val > int_max || val < int_min
 				}
 				if is_large {
 					c.error('overflow in implicit type `int`, use explicit type casting instead',
@@ -2577,7 +2577,7 @@ fn (mut c Checker) stmts_ending_with_expression(mut stmts []ast.Stmt) {
 		c.scope_returns = false
 		return
 	}
-	if c.stmt_level > checker.stmt_level_cutoff_limit {
+	if c.stmt_level > stmt_level_cutoff_limit {
 		c.scope_returns = false
 		c.error('checker: too many stmt levels: ${c.stmt_level} ', stmts[0].pos)
 		return
@@ -2637,7 +2637,7 @@ pub fn (mut c Checker) expr(mut node ast.Expr) ast.Type {
 		c.expr_level--
 	}
 
-	if c.expr_level > checker.expr_level_cutoff_limit {
+	if c.expr_level > expr_level_cutoff_limit {
 		c.error('checker: too many expr levels: ${c.expr_level} ', node.pos())
 		return ast.void_type
 	}
@@ -4810,7 +4810,7 @@ fn (mut c Checker) ensure_generic_type_specify_type_names(typ ast.Type, pos toke
 	defer {
 		c.ensure_generic_type_level--
 	}
-	if c.ensure_generic_type_level > checker.expr_level_cutoff_limit {
+	if c.ensure_generic_type_level > expr_level_cutoff_limit {
 		c.error('checker: too many levels of Checker.ensure_generic_type_specify_type_names calls: ${c.ensure_generic_type_level} ',
 			pos)
 		return false

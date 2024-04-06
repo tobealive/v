@@ -425,7 +425,7 @@ pub fn uint128_new(lo u64, hi u64) Uint128 {
 
 // unint_from_dec_str returns an error or new Uint128 from given string
 pub fn uint128_from_dec_str(value string) !Uint128 {
-	mut res := unsigned.uint128_zero
+	mut res := uint128_zero
 	for b_ in value.bytes() {
 		b := b_ - '0'.bytes()[0]
 		if b > 9 {

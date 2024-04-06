@@ -42,7 +42,7 @@ fn (mut infos []AlignInfo) add_info(len int, type_len int, line int, cfg AddInfo
 		len_diff := mathutil.abs(infos[i].max_len - len) +
 			mathutil.abs(infos[i].max_type_len - type_len)
 
-		if len_diff >= fmt.struct_field_align_threshold {
+		if len_diff >= struct_field_align_threshold {
 			infos.add_new_info(len, type_len, line)
 			return
 		}

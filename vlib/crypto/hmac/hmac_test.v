@@ -63,8 +63,8 @@ fn test_hmac_md5() {
 		'6f630fad67cda0ee1fb1f562db3aa53e',
 	]
 	mut result := ''
-	for i, key in hmac.keys {
-		result = new(key, hmac.data[i], md5.sum, md5.block_size).hex()
+	for i, key in keys {
+		result = new(key, data[i], md5.sum, md5.block_size).hex()
 		assert result == md5_expected_results[i]
 	}
 }
@@ -80,8 +80,8 @@ fn test_hmac_sha1() {
 		'e8e99d0f45237d786d6bbaa7965c7808bbff1a91',
 	]
 	mut result := ''
-	for i, key in hmac.keys {
-		result = new(key, hmac.data[i], sha1.sum, sha1.block_size).hex()
+	for i, key in keys {
+		result = new(key, data[i], sha1.sum, sha1.block_size).hex()
 		assert result == sha1_expected_results[i]
 	}
 }
@@ -97,8 +97,8 @@ fn test_hmac_sha224() {
 		'7358939e58683a448ac5065196d33191a1c1d33d4b8b0304dc60f5e0',
 	]
 	mut result := ''
-	for i, key in hmac.keys {
-		result = new(key, hmac.data[i], sha256.sum224, sha256.block_size).hex()
+	for i, key in keys {
+		result = new(key, data[i], sha256.sum224, sha256.block_size).hex()
 		assert result == sha224_expected_results[i]
 	}
 }
@@ -114,8 +114,8 @@ fn test_hmac_sha256() {
 		'6355ac22e890d0a3c8481a5ca4825bc884d3e7a1ff98a2fc2ac7d8e064c3b2e6',
 	]
 	mut result := ''
-	for i, key in hmac.keys {
-		result = new(key, hmac.data[i], sha256.sum, sha256.block_size).hex()
+	for i, key in keys {
+		result = new(key, data[i], sha256.sum, sha256.block_size).hex()
 		assert result == sha256_expected_results[i]
 	}
 }
@@ -131,8 +131,8 @@ fn test_hmac_sha384() {
 		'34f065bdedc2487c30a634d9a49cf42116f78bb386ea4d498aea05c0077f05373cfdaa9b59a7b0481bced9e3f55016a9',
 	]
 	mut result := ''
-	for i, key in hmac.keys {
-		result = new(key, hmac.data[i], sha512.sum384, sha512.block_size).hex()
+	for i, key in keys {
+		result = new(key, data[i], sha512.sum384, sha512.block_size).hex()
 		assert result == sha384_expected_results[i]
 	}
 }
@@ -148,8 +148,8 @@ fn test_hmac_sha512() {
 		'09441cda584ed2f4d2f5b519c71baf3c79cce19dfc89a548e73b3bb382a9124d6e792b77bf57903ff5858e5d111d15f45d6fd118eea023f28d2eb234ebe62f85',
 	]
 	mut result := ''
-	for i, key in hmac.keys {
-		result = new(key, hmac.data[i], sha512.sum512, sha512.block_size).hex()
+	for i, key in keys {
+		result = new(key, data[i], sha512.sum512, sha512.block_size).hex()
 		assert result == sha512_expected_results[i]
 	}
 }
@@ -165,8 +165,8 @@ fn test_hmac_blake2s_256() {
 		'467201ef5997a3442932b318083488cf9aa1d89bef2146154b4816d34863e33d',
 	]
 	mut result := ''
-	for i, key in hmac.keys {
-		result = new(key, hmac.data[i], blake2s.sum256, blake2s.block_size).hex()
+	for i, key in keys {
+		result = new(key, data[i], blake2s.sum256, blake2s.block_size).hex()
 		assert result == blake2s_256_expected_results[i]
 	}
 }
@@ -182,8 +182,8 @@ fn test_hmac_blake2s_224() {
 		'17b9ebb1426a5a3dd6aa91567bd9cb9c19b3dc007adb726e55b98926',
 	]
 	mut result := ''
-	for i, key in hmac.keys {
-		result = new(key, hmac.data[i], blake2s.sum224, blake2s.block_size).hex()
+	for i, key in keys {
+		result = new(key, data[i], blake2s.sum224, blake2s.block_size).hex()
 		assert result == blake2s_224_expected_results[i]
 	}
 }
@@ -199,8 +199,8 @@ fn test_hmac_blake2s_160() {
 		'6f3127fcba040fe6ea552b22c39b0fd83abca19a',
 	]
 	mut result := ''
-	for i, key in hmac.keys {
-		result = new(key, hmac.data[i], blake2s.sum160, blake2s.block_size).hex()
+	for i, key in keys {
+		result = new(key, data[i], blake2s.sum160, blake2s.block_size).hex()
 		assert result == blake2s_160_expected_results[i]
 	}
 }
@@ -216,8 +216,8 @@ fn test_hmac_blake2s_128() {
 		'96a72e3adf5e0b02d4e6d4e8a7342a77',
 	]
 	mut result := ''
-	for i, key in hmac.keys {
-		result = new(key, hmac.data[i], blake2s.sum128, blake2s.block_size).hex()
+	for i, key in keys {
+		result = new(key, data[i], blake2s.sum128, blake2s.block_size).hex()
 		assert result == blake2s_128_expected_results[i]
 	}
 }
@@ -233,8 +233,8 @@ fn test_hmac_blake2b_512() {
 		'f1c9b64e121330c512dc31e0d4a2fc84b7ca5be64e08934a7fc4640c4a1f5cc3c1f34d811c8079cc2df65a4e5d68baf833a1ec558546abeaa7d564840618db7b',
 	]
 	mut result := ''
-	for i, key in hmac.keys {
-		result = new(key, hmac.data[i], blake2b.sum512, blake2b.block_size).hex()
+	for i, key in keys {
+		result = new(key, data[i], blake2b.sum512, blake2b.block_size).hex()
 		assert result == blake2b_512_expected_results[i]
 	}
 }
@@ -250,8 +250,8 @@ fn test_hmac_blake2b_384() {
 		'c9d0155de83454f0720b5310b4b891ddc9ab702b8260b15aa6f7291efec95b7e7a2c986019814b7c28c105c22f0ef961',
 	]
 	mut result := ''
-	for i, key in hmac.keys {
-		result = new(key, hmac.data[i], blake2b.sum384, blake2b.block_size).hex()
+	for i, key in keys {
+		result = new(key, data[i], blake2b.sum384, blake2b.block_size).hex()
 		assert result == blake2b_384_expected_results[i]
 	}
 }
@@ -267,8 +267,8 @@ fn test_hmac_blake2b_256() {
 		'dce7f41e3db51656ffc97259ca0ef3358cbfb41ac3e74e2dd9cd8639ab4996a0',
 	]
 	mut result := ''
-	for i, key in hmac.keys {
-		result = new(key, hmac.data[i], blake2b.sum256, blake2b.block_size).hex()
+	for i, key in keys {
+		result = new(key, data[i], blake2b.sum256, blake2b.block_size).hex()
 		assert result == blake2b_256_expected_results[i]
 	}
 }
@@ -284,8 +284,8 @@ fn test_hmac_blake2b_160() {
 		'fc5fb8ec933174d97c7712fa8f8802467ac42b1e',
 	]
 	mut result := ''
-	for i, key in hmac.keys {
-		result = new(key, hmac.data[i], blake2b.sum160, blake2b.block_size).hex()
+	for i, key in keys {
+		result = new(key, data[i], blake2b.sum160, blake2b.block_size).hex()
 		assert result == blake2b_160_expected_results[i]
 	}
 }
@@ -301,8 +301,8 @@ fn test_hmac_blake3_256() {
 		'dac8165b07656b282c5b9f2f2cf22569560778cb6240b11a383f2bf466f1ba36',
 	]
 	mut result := ''
-	for i, key in hmac.keys {
-		result = new(key, hmac.data[i], blake3.sum256, blake3.block_size).hex()
+	for i, key in keys {
+		result = new(key, data[i], blake3.sum256, blake3.block_size).hex()
 		assert result == blake3_256_expected_results[i]
 	}
 }

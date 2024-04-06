@@ -935,7 +935,7 @@ pub fn parse_args_and_show_errors(known_external_commands []string, args []strin
 					eprintln_exit('Use `v ${arg}` instead.')
 				}
 				if arg.len != 0 && arg[0] == `-` {
-					if arg[1..] in pref.list_of_flags_with_param {
+					if arg[1..] in list_of_flags_with_param {
 						// skip parameter
 						i++
 						continue
@@ -1270,7 +1270,7 @@ fn (mut prefs Preferences) diagnose_deprecated_defines(define_parts []string) {
 }
 
 pub fn supported_test_runners_list() string {
-	return pref.supported_test_runners.map('`${it}`').join(', ')
+	return supported_test_runners.map('`${it}`').join(', ')
 }
 
 pub fn (pref &Preferences) should_trace_fn_name(fname string) bool {

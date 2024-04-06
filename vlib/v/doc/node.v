@@ -16,14 +16,14 @@ pub fn (nodes []DocNode) find(symname string) !DocNode {
 
 // sort_by_name sorts the array based on the symbol names.
 pub fn (mut nodes []DocNode) sort_by_name() {
-	if doc.should_sort {
+	if should_sort {
 		nodes.sort_with_compare(compare_nodes_by_name)
 	}
 }
 
 // sort_by_kind sorts the array based on the symbol kind.
 pub fn (mut nodes []DocNode) sort_by_kind() {
-	if doc.should_sort {
+	if should_sort {
 		nodes.sort_with_compare(compare_nodes_by_kind)
 	}
 }
