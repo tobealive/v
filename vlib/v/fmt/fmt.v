@@ -2235,15 +2235,11 @@ pub fn (mut f Fmt) ident(node ast.Ident) {
 				is_local = true
 			}
 		}
-		if !is_local && !node.name.contains('.') && !f.inside_const {
-			// Force usage of full path to const in the same module:
-			// `println(minute)` => `println(time.minute)`
-			// This makes it clear that a module const is being used
-			// (since V's consts are no longer ALL_CAP).
-			// ^^^ except for `main`, where consts are allowed to not have a `main.` prefix.
-			if obj := f.file.global_scope.find('${f.cur_mod}.${node.name}') {
+		if !is_local && !node.name.contains('.') && !f.inside_const && node.info !is ast.IdentVar {
+			// Prefix const names with module name if it's not `main`.
+			if obj := f.file.global_scope.objects['${f.cur_mod}.${node.name}'] {
 				if obj is ast.ConstField {
-					// "v.fmt.foo" => "fmt.foo"
+					// `v.fmt.foo` => `fmt.foo`
 					const_name := node.name.all_after_last('.')
 					if f.cur_mod == 'main' {
 						f.write(const_name)
