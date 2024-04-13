@@ -1,16 +1,8 @@
 name: CI macOS
 
 on:
-  push:
-    paths-ignore:
-      - '**.md'
-      - '**.yml'
-      - '!**/macos_ci.yml'
-  pull_request:
-    paths-ignore:
-      - '**.md'
-      - '**.yml'
-      - '!**/macos_ci.yml'
+  workflow_run:
+    workflows: ['Verify']
 
 concurrency:
   group: macos-ci-${{ github.event.pull_request.number || github.sha }}
