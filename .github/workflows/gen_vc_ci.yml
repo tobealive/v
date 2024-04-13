@@ -5,7 +5,7 @@ on:
     branches:
       - master
     paths-ignore:
-      - "**.md"
+      - '**.md'
 
 jobs:
   build-vc:
@@ -48,4 +48,6 @@ jobs:
           .github/workflows/retry.sh git -C vc pull --rebase origin master
           # Note that failure below may happen, due to vlang/vc rejecting the push
           # from forked repos; that is not usually a problem.
-          git -C vc push || true 
+      - name: Deploy
+        if: github.event.repository.full_name == 'vlang/v'
+        run: git -C vc push || true
