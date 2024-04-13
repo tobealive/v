@@ -1,25 +1,45 @@
 name: CI Linux
+run-name: ${{ github.event.workflow_run.head_commit.message }}
 
 on:
-  push:
-    paths-ignore:
-      - '**.md'
-      - '**.yml'
-      - '!**/linux_ci.yml'
-  pull_request:
-    paths-ignore:
-      - '**.md'
-      - '**.yml'
-      - '!**/linux_ci.yml'
+  workflow_run:
+    workflows: ['Verify']
+    types: [completed]
 
 concurrency:
   group: linux-ci-${{ github.event.pull_request.number || github.sha }}
   cancel-in-progress: true
 
 jobs:
+  check-relevance:
+    runs-on: ubuntu-20.04
+    if: github.event.workflow_run.conclusion == 'success' && (github.event_name != 'push' || github.event.ref == 'refs/heads/master' || github.event.repository.full_name != 'vlang/v')
+    outputs:
+      any_changed: ${{ steps.changed-files.outputs.any_changed }}
+    steps:
+      - uses: actions/checkout@v4
+      - name: Check changed files
+        id: changed-files
+        uses: tj-actions/changed-files@v44
+        with:
+          files: |
+            !**.md
+            !**.yml
+            **/linux_ci.yml
+      # - name: List relevant changed files
+      #   if: steps.relevance.outputs.any_changed == 'true'
+      #   env:
+      #     ALL_CHANGED_FILES: ${{ steps.relevance.outputs.all_changed_files }}
+      #   run: |
+      #     echo "Relevant changed files:"
+      #     for file in ${ALL_CHANGED_FILES}; do
+      #       echo $file
+      #     done
+
   tcc:
     runs-on: ubuntu-20.04
-    if: github.event_name != 'push' || github.event.ref == 'refs/heads/master' || github.event.repository.full_name != 'vlang/v'
+    needs: check-relevance
+    if: needs.check-relevance.outputs.any_changed == 'true' && (github.event_name != 'push' || github.event.ref == 'refs/heads/master' || github.event.repository.full_name != 'vlang/v')
     timeout-minutes: 121
     env:
       VFLAGS: -cc tcc -no-retry-compilation
@@ -39,7 +59,6 @@ jobs:
         run: |
           echo $VFLAGS
           make
-          ./v test-cleancode
           ./v -d debug_malloc -d debug_realloc -o v cmd/v
           ./v -cg -cstrict -o v cmd/v
           # Test v -realloc arena allocation
@@ -99,7 +118,8 @@ jobs:
 
   tcc-boehm-gc:
     runs-on: ubuntu-20.04
-    if: github.event_name != 'push' || github.event.ref == 'refs/heads/master' || github.event.repository.full_name != 'vlang/v'
+    needs: check-relevance
+    if: needs.check-relevance.outputs.any_changed == 'true' && (github.event_name != 'push' || github.event.ref == 'refs/heads/master' || github.event.repository.full_name != 'vlang/v')
     timeout-minutes: 121
     env:
       VFLAGS: -cc tcc -no-retry-compilation
@@ -156,7 +176,8 @@ jobs:
 
   gcc:
     runs-on: ubuntu-20.04
-    if: github.event_name != 'push' || github.event.ref == 'refs/heads/master' || github.event.repository.full_name != 'vlang/v'
+    needs: check-relevance
+    if: needs.check-relevance.outputs.any_changed == 'true' && (github.event_name != 'push' || github.event.ref == 'refs/heads/master' || github.event.repository.full_name != 'vlang/v')
     timeout-minutes: 121
     steps:
       - uses: actions/checkout@v4
@@ -262,7 +283,8 @@ jobs:
 
   clang:
     runs-on: ubuntu-20.04
-    if: github.event_name != 'push' || github.event.ref == 'refs/heads/master' || github.event.repository.full_name != 'vlang/v'
+    needs: check-relevance
+    if: needs.check-relevance.outputs.any_changed == 'true' && (github.event_name != 'push' || github.event.ref == 'refs/heads/master' || github.event.repository.full_name != 'vlang/v')
     timeout-minutes: 121
     env:
       VFLAGS: -cc clang

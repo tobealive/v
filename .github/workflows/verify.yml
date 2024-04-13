@@ -1,0 +1,20 @@
+name: Verify
+
+on:
+  push:
+    paths-ignore:
+      - '**.md'
+  pull_request:
+    paths-ignore:
+      - '**.md'
+
+jobs:
+  verify:
+    runs-on: ubuntu-20.04
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build
+        # Make sure vtcc can build itself
+        run: make -j4  && ./v -showcc -cg -cstrict -o v cmd/v
+      - name: Verify formatting
+        run: ./v test-cleancode

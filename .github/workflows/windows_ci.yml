@@ -1,25 +1,39 @@
 name: CI Windows
+run-name: ${{ github.event.workflow_run.head_commit.message }}
 
 on:
-  push:
-    paths-ignore:
-      - '**.md'
-      - '**.yml'
-      - '!**/windows_ci.yml'
-  pull_request:
-    paths-ignore:
-      - '**.md'
-      - '**.yml'
-      - '!**/windows_ci.yml'
+  workflow_run:
+    workflows: ['Verify']
+    types: [completed]
 
 concurrency:
   group: windows-ci-${{ github.event.pull_request.number || github.sha }}
   cancel-in-progress: true
 
 jobs:
+  check-relevance:
+    runs-on: ubuntu-20.04
+    if: github.event_name != 'push' || github.event.ref == 'refs/heads/master' || github.event.repository.full_name != 'vlang/v'
+    outputs:
+      any_changed: ${{ steps.changed-files.outputs.any_changed }}
+    steps:
+      - name: Exit on verification failure
+        if: ${{ github.event.workflow_run.conclusion == 'failure' }}
+        run: echo 'Code verification failed' && exit 1
+      - uses: actions/checkout@v4
+      - name: Check changed files
+        id: changed-files
+        uses: tj-actions/changed-files@v44
+        with:
+          files: |
+            !**.md
+            !**.yml
+            **/windows_ci.yml
+
   gcc:
     runs-on: windows-2019
-    if: github.event_name != 'push' || github.event.ref == 'refs/heads/master' || github.event.repository.full_name != 'vlang/v'
+    needs: check-relevance
+    if: needs.check-relevance.outputs.any_changed == 'true' && (github.event_name != 'push' || github.event.ref == 'refs/heads/master' || github.event.repository.full_name != 'vlang/v')
     timeout-minutes: 271
     env:
       VFLAGS: -cc gcc
@@ -71,7 +85,8 @@ jobs:
 
   msvc:
     runs-on: windows-2019
-    if: github.event_name != 'push' || github.event.ref == 'refs/heads/master' || github.event.repository.full_name != 'vlang/v'
+    needs: check-relevance
+    if: needs.check-relevance.outputs.any_changed == 'true' && (github.event_name != 'push' || github.event.ref == 'refs/heads/master' || github.event.repository.full_name != 'vlang/v')
     timeout-minutes: 271
     env:
       VFLAGS: -cc msvc
@@ -117,7 +132,8 @@ jobs:
 
   tcc:
     runs-on: windows-2019
-    if: github.event_name != 'push' || github.event.ref == 'refs/heads/master' || github.event.repository.full_name != 'vlang/v'
+    needs: check-relevance
+    if: needs.check-relevance.outputs.any_changed == 'true' && (github.event_name != 'push' || github.event.ref == 'refs/heads/master' || github.event.repository.full_name != 'vlang/v')
     timeout-minutes: 181
     env:
       VFLAGS: -cc tcc -no-retry-compilation
