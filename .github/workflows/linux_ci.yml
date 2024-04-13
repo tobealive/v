@@ -16,6 +16,9 @@ concurrency:
   group: linux-ci-${{ github.event.pull_request.number || github.sha }}
   cancel-in-progress: true
 
+env:
+  RETRY: .github/workflows/retry.sh
+
 jobs:
   tcc:
     runs-on: ubuntu-20.04
@@ -27,14 +30,14 @@ jobs:
       - uses: actions/checkout@v4
       - name: Install dependencies
         run: |
-          .github/workflows/retry.sh sudo apt-get update
-          .github/workflows/retry.sh sudo apt-get install --quiet -y libssl-dev sqlite3 libsqlite3-dev valgrind
-          .github/workflows/retry.sh sudo apt-get install --quiet -y libfreetype6-dev  libxi-dev libxcursor-dev libgl-dev
+          $RETRY sudo apt-get update
+          $RETRY sudo apt-get install --quiet -y libssl-dev sqlite3 libsqlite3-dev valgrind
+          $RETRY sudo apt-get install --quiet -y libfreetype6-dev  libxi-dev libxcursor-dev libgl-dev
           # The following is needed for examples/wkhtmltopdf.v
-          .github/workflows/retry.sh wget https://github.com/wkhtmltopdf/packaging/releases/download/0.12.6-1/wkhtmltox_0.12.6-1.focal_amd64.deb
-          .github/workflows/retry.sh sudo apt-get install --quiet -y xfonts-75dpi xfonts-base
-          .github/workflows/retry.sh sudo apt-get install --quiet -y expect
-          .github/workflows/retry.sh sudo dpkg -i wkhtmltox_0.12.6-1.focal_amd64.deb
+          $RETRY wget https://github.com/wkhtmltopdf/packaging/releases/download/0.12.6-1/wkhtmltox_0.12.6-1.focal_amd64.deb
+          $RETRY sudo apt-get install --quiet -y xfonts-75dpi xfonts-base
+          $RETRY sudo apt-get install --quiet -y expect
+          $RETRY sudo dpkg -i wkhtmltox_0.12.6-1.focal_amd64.deb
       - name: Build v
         run: |
           echo $VFLAGS
@@ -107,14 +110,14 @@ jobs:
       - uses: actions/checkout@v4
       - name: Install dependencies
         run: |
-          .github/workflows/retry.sh sudo apt-get update
-          .github/workflows/retry.sh sudo apt-get install --quiet -y libssl-dev sqlite3 libsqlite3-dev valgrind
-          .github/workflows/retry.sh sudo apt-get install --quiet -y libfreetype6-dev  libxi-dev libxcursor-dev libgl-dev
-          .github/workflows/retry.sh sudo apt-get install --quiet -y libgc-dev
+          $RETRY sudo apt-get update
+          $RETRY sudo apt-get install --quiet -y libssl-dev sqlite3 libsqlite3-dev valgrind
+          $RETRY sudo apt-get install --quiet -y libfreetype6-dev  libxi-dev libxcursor-dev libgl-dev
+          $RETRY sudo apt-get install --quiet -y libgc-dev
           # The following is needed for examples/wkhtmltopdf.v
-          .github/workflows/retry.sh wget https://github.com/wkhtmltopdf/packaging/releases/download/0.12.6-1/wkhtmltox_0.12.6-1.focal_amd64.deb
-          .github/workflows/retry.sh sudo apt-get install --quiet -y xfonts-75dpi xfonts-base
-          .github/workflows/retry.sh sudo dpkg -i wkhtmltox_0.12.6-1.focal_amd64.deb
+          $RETRY wget https://github.com/wkhtmltopdf/packaging/releases/download/0.12.6-1/wkhtmltox_0.12.6-1.focal_amd64.deb
+          $RETRY sudo apt-get install --quiet -y xfonts-75dpi xfonts-base
+          $RETRY sudo dpkg -i wkhtmltox_0.12.6-1.focal_amd64.deb
       - name: Build v
         run: |
           echo $VFLAGS
@@ -162,9 +165,9 @@ jobs:
       - uses: actions/checkout@v4
       - name: Install dependencies
         run: |
-          .github/workflows/retry.sh sudo apt-get update
-          .github/workflows/retry.sh sudo apt-get install --quiet -y postgresql libpq-dev libssl-dev sqlite3 libsqlite3-dev valgrind
-          .github/workflows/retry.sh sudo apt-get install --quiet -y libfreetype6-dev  libxi-dev libxcursor-dev libgl-dev
+          $RETRY sudo apt-get update
+          $RETRY sudo apt-get install --quiet -y postgresql libpq-dev libssl-dev sqlite3 libsqlite3-dev valgrind
+          $RETRY sudo apt-get install --quiet -y libfreetype6-dev  libxi-dev libxcursor-dev libgl-dev
       - name: Build V
         run: make -j4 && ./v -cc gcc -cg -cstrict -o v cmd/v
       - name: Valgrind v.c
@@ -182,7 +185,7 @@ jobs:
       # - name: Test v->js
       #   run: ./v -o hi.js examples/hello_v_js.v && node hi.js
       # - name: Build Vorum
-      #   run: .github/workflows/retry.sh git clone --depth 1 https://github.com/vlang/vorum && cd vorum && ../v . && cd ..
+      #   run: $RETRY git clone --depth 1 https://github.com/vlang/vorum && cd vorum && ../v . && cd ..
       - name: Freestanding
         run: ./v -freestanding run vlib/os/bare/bare_example_linux.v
       - name: V self compilation
@@ -270,10 +273,10 @@ jobs:
       - uses: actions/checkout@v4
       - name: Install dependencies
         run: |
-          .github/workflows/retry.sh sudo apt-get update
-          .github/workflows/retry.sh sudo apt-get install --quiet -y postgresql libpq-dev libssl-dev sqlite3 libsqlite3-dev valgrind
-          .github/workflows/retry.sh sudo apt-get install --quiet -y libfreetype6-dev  libxi-dev libxcursor-dev libgl-dev
-          .github/workflows/retry.sh sudo apt-get install --quiet -y clang
+          $RETRY sudo apt-get update
+          $RETRY sudo apt-get install --quiet -y postgresql libpq-dev libssl-dev sqlite3 libsqlite3-dev valgrind
+          $RETRY sudo apt-get install --quiet -y libfreetype6-dev  libxi-dev libxcursor-dev libgl-dev
+          $RETRY sudo apt-get install --quiet -y clang
       - name: Build V
         run: make -j4 && ./v -cc clang -cg -cstrict -o v cmd/v
       - name: Valgrind
