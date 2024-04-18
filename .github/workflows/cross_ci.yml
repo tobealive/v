@@ -12,8 +12,10 @@ on:
       - '**.yml'
       - '!**/cross_ci.yml'
 
-jobs:
+env:
+  RETRY: .github/workflows/retry.sh
 
+jobs:
   macos-cross:
     runs-on: macos-latest
     if: github.event_name != 'push' || github.event.ref == 'refs/heads/master' || github.event.repository.full_name != 'vlang/v'
@@ -27,7 +29,7 @@ jobs:
 
       - name: Install dependencies
         run: |
-          .github/workflows/retry.sh brew install mingw-w64
+          $RETRY brew install mingw-w64
           export LIBRARY_PATH="$LIBRARY_PATH:/usr/local/opt/openssl/lib/"
 
       - name: Build V
@@ -59,10 +61,10 @@ jobs:
       - name: Install dependencies
         run: |
           ## sudo dpkg --add-architecture i386
-          .github/workflows/retry.sh sudo apt update
-          .github/workflows/retry.sh sudo apt-get install --quiet -y libssl-dev sqlite3 libsqlite3-dev
-          .github/workflows/retry.sh sudo apt-get install --quiet -y mingw-w64 wine-stable winetricks
-          ## .github/workflows/retry.sh sudo apt-get install --quiet -y wine32
+          $RETRY sudo apt update
+          $RETRY sudo apt-get install --quiet -y libssl-dev sqlite3 libsqlite3-dev
+          $RETRY sudo apt-get install --quiet -y mingw-w64 wine-stable winetricks
+          ## $RETRY sudo apt-get install --quiet -y wine32
 
       - name: Turn off the wine crash dialog
         run: winetricks nocrashdialog

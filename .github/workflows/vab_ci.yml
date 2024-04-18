@@ -13,6 +13,9 @@ on:
       - '**.yml'
       - '!**/vab_ci.yml'
 
+env:
+  RETRY: .github/workflows/retry.sh
+
 jobs:
   vab-compiles-v-examples:
     runs-on: ubuntu-20.04
@@ -32,7 +35,7 @@ jobs:
 
       - name: Install vab
         run: |
-          .github/workflows/retry.sh v install vab
+          $RETRY v install vab
           v -g ~/.vmodules/vab
           sudo ln -s ~/.vmodules/vab/vab /usr/local/bin/vab
 
@@ -68,7 +71,7 @@ jobs:
 
       - name: Install vab
         run: |
-          .github/workflows/retry.sh v install vab
+          $RETRY v install vab
           v -g ~/.vmodules/vab
           sudo ln -s ~/.vmodules/vab/vab /usr/local/bin/vab
 

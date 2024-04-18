@@ -16,6 +16,9 @@ concurrency:
   group: build-other-${{ github.event.pull_request.number || github.sha }}
   cancel-in-progress: true
 
+env:
+  RETRY: .github/workflows/retry.sh
+
 jobs:
   no-gpl-by-accident:
     runs-on: ubuntu-20.04
@@ -58,7 +61,7 @@ jobs:
         run: make -j4
       - name: Clone & Build previous vmaster/v
         run: |
-          .github/workflows/retry.sh git clone --depth=1 https://github.com/vlang/v vmaster/
+          $RETRY git clone --depth=1 https://github.com/vlang/v vmaster/
           (cd vmaster; make -j4)
       - name: V versions
         run: ./v version && ./vmaster/v version
@@ -82,10 +85,10 @@ jobs:
 
       - name: Install dependencies
         run: |
-          .github/workflows/retry.sh sudo apt-get update
-          .github/workflows/retry.sh sudo apt-get install --quiet -y libsodium-dev libssl-dev sqlite3 libsqlite3-dev postgresql libpq-dev valgrind
-          .github/workflows/retry.sh sudo apt-get install --quiet -y libfreetype6-dev libxi-dev libxcursor-dev libgl-dev xfonts-75dpi xfonts-base
-          .github/workflows/retry.sh sudo apt-get install --quiet -y g++-9 g++-11
+          $RETRY sudo apt-get update
+          $RETRY sudo apt-get install --quiet -y libsodium-dev libssl-dev sqlite3 libsqlite3-dev postgresql libpq-dev valgrind
+          $RETRY sudo apt-get install --quiet -y libfreetype6-dev libxi-dev libxcursor-dev libgl-dev xfonts-75dpi xfonts-base
+          $RETRY sudo apt-get install --quiet -y g++-9 g++-11
 
       - name: Build v
         run: make
@@ -116,7 +119,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - name: Install zzuf
-        run: .github/workflows/retry.sh sudo apt install -qq zzuf
+        run: $RETRY sudo apt install -qq zzuf
       - name: Build local v
         run: |
           make -j4

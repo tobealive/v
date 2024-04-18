@@ -17,6 +17,9 @@ concurrency:
   group: sdl-ci-${{ github.event.pull_request.number || github.sha }}
   cancel-in-progress: true
 
+env:
+  RETRY: .github/workflows/retry.sh
+
 jobs:
   v-compiles-sdl-examples:
     runs-on: ubuntu-20.04

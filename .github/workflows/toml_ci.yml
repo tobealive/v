@@ -12,6 +12,9 @@ on:
       - '**.yml'
       - '!**/toml_ci.yml'
 
+env:
+  RETRY: .github/workflows/retry.sh
+
 jobs:
   toml-module-pass-external-test-suites:
     runs-on: ubuntu-latest
@@ -21,8 +24,8 @@ jobs:
       - uses: actions/checkout@v4
       - name: Install dependencies
         run: |
-          .github/workflows/retry.sh sudo apt-get update
-          .github/workflows/retry.sh sudo apt-get install --quiet -y jq libgc-dev
+          $RETRY sudo apt-get update
+          $RETRY sudo apt-get install --quiet -y jq libgc-dev
       - name: Build V
         run: make
 

@@ -62,19 +62,15 @@ jobs:
 
       - name: Install linker
         if: ${{ startsWith(matrix.os, 'ubuntu')}}
-        run: |
-          .github/workflows/retry.sh sudo apt-get install --quiet -y binutils
+        run: .github/workflows/retry.sh sudo apt-get install --quiet -y binutils
 
       - name: Build V with make.bat
         if: ${{ startsWith(matrix.os, 'windows') }}
-        run: |
-          .\make.bat
-          .\v.exe symlink -githubci
+        run: .\make.bat && .\v.exe symlink -githubci
+
       - name: Build V with make
         if: ${{ !startsWith(matrix.os, 'windows') }}
-        run: |
-          make
-          ./v symlink -githubci
+        run: make && ./v symlink -githubci
 
       - name: Run the native backend tests serially with more details
         run: |
