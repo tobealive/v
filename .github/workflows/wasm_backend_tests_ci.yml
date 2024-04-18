@@ -41,7 +41,7 @@ on:
       - 'vlib/v/gen/wasm/tests/**.v'
 
 concurrency:
-  group: wasm-backend-ci-${{ github.event.pull_request.number || github.sha }}
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.sha }}
   cancel-in-progress: true
 
 jobs:
@@ -66,7 +66,6 @@ jobs:
       - name: Test the WASM backend
         run: ./v test vlib/v/gen/wasm/tests/
 
-
   wasm-backend-macos:
     runs-on: macOS-12
     if: github.event_name != 'push' || github.event.ref == 'refs/heads/master' || github.event.repository.full_name != 'vlang/v'
@@ -87,7 +86,6 @@ jobs:
 
       - name: Test the WASM backend
         run: ./v test vlib/v/gen/wasm/tests/
-
 #  wasm-backend-windows:
 #    runs-on: windows-2022
 #    if: github.event_name != 'push' || github.event.ref == 'refs/heads/master' || github.event.repository.full_name != 'vlang/v'
