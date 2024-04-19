@@ -3,7 +3,108 @@ module diff
 import os
 import time
 
+// TODO: windows tool
+pub enum DiffTool {
+	@none
+	colordiff
+	diff
+	delta
+	from_env
+}
+
+@[params]
+pub struct CompareOptions {
+pub:
+	cmd  DiffTool
+	args string
+}
+
+const default_args = $if openbsd {
+	['-d', '-a', '-U', '2']
+} $else $if freebsd {
+	['--minimal', '--text', '--unified=2']
+} $else {
+	['--minimal', '--text', '--unified=2', '--show-function-line="fn "']
+}
+
+// NOTE:
+// - Tools like `code` and `opendiff` that won't do what the function states returning a string but
+// open the file in a GUI will not be taken into account be default but only via env opts.
+// - Unrecoverable errors instead of letting users handle them is imho untanable.
+
+// compare_files returns a string displaying the differences between two files.
+pub fn compare_files(path1 string, path2 string, opts CompareOptions) !string {
+	tool := get_tool(opts)!
+	os.find_abs_path_of_executable(tool) or {
+		return error('failed to find comparison command `${tool}`')
+	}
+	args, is_default := get_args(opts)
+	if is_default && tool == 'diff' {
+		color_diff_cmd := '${tool} --color=always ${args} ${os.quoted_path(path1)} ${os.quoted_path(path2)}'
+		color_result := os.execute(color_diff_cmd)
+		if !color_result.output.starts_with('diff: unrecognized option') {
+			return color_result.output.trim_right('\r\n')
+		}
+	}
+	full_cmd := '${tool} ${args} ${os.quoted_path(path1)} ${os.quoted_path(path2)}'
+	return os.execute(full_cmd).output.trim_right('\r\n')
+}
+
+// compare_text returns a string displaying the differences between two strings.
+pub fn compare_text(text1 string, text2 string, opts CompareOptions) !string {
+	ctime := time.sys_mono_now()
+	tmp_dir := os.join_path_single(os.vtmp_dir(), ctime.str())
+	os.mkdir(tmp_dir)!
+	defer {
+		os.rmdir_all(tmp_dir) or {}
+	}
+	path1 := os.join_path_single(tmp_dir, 'text1.txt')
+	path2 := os.join_path_single(tmp_dir, 'text2.txt')
+	// Add `\n` to Prevent printing `\ No newline at end of file` when comparing strings.
+	// TODO: test
+	os.write_file(path1, text1 + '\n')!
+	os.write_file(path2, text2 + '\n')!
+	return compare_files(path1, path2, opts)!
+}
+
+fn get_tool(opts CompareOptions) !string {
+	return match opts.cmd {
+		.@none { find_working_diff_cmd()! }
+		.from_env { os.getenv('VDIFF_TOOL') }
+		else { opts.cmd.str() }
+	}
+}
+
+fn get_args(opts CompareOptions) (string, bool) {
+	env_args := os.getenv('VDIFF_OPTIONS')
+	return match true {
+		opts.cmd == .from_env && env_args != '' { env_args, false }
+		opts.args != '' { opts.args, false }
+		opts.cmd == .delta { '', false }
+		else { diff.default_args.join(' '), true }
+	}
+}
+
+fn find_working_diff_cmd() !string {
+	known_diff_tools := [DiffTool.colordiff, .diff]
+	for tool in known_diff_tools {
+		cmd := tool.str()
+		os.find_abs_path_of_executable(cmd) or { continue }
+		return cmd
+	}
+	$if windows {
+		for tool in known_diff_tools {
+			cmd := '${tool.str()}.exe'
+			os.find_abs_path_of_executable(cmd) or { continue }
+			return cmd
+		}
+	}
+	return error('No working "diff" command found')
+}
+
 // find_working_diff_command returns the first available command from a list of known diff cli tools.
+@[deprecated_after: '2024-05-31']
+@[deprecated]
 pub fn find_working_diff_command() !string {
 	env_difftool := os.getenv('VDIFF_TOOL')
 	env_diffopts := os.getenv('VDIFF_OPTIONS')
@@ -33,28 +134,25 @@ pub fn find_working_diff_command() !string {
 }
 
 // color_compare_files returns a colored diff between two files.
+@[deprecated: 'use `compare_files` instead']
+@[deprecated_after: '2024-05-31']
 pub fn color_compare_files(diff_cmd string, path1 string, path2 string) string {
 	cmd := diff_cmd.all_before(' ')
 	os.find_abs_path_of_executable(cmd) or { return 'comparison command: `${cmd}` not found' }
-	flags := $if openbsd {
-		['-d', '-a', '-U', '2']
-	} $else $if freebsd {
-		['--minimal', '--text', '--unified=2']
-	} $else {
-		['--minimal', '--text', '--unified=2', '--show-function-line="fn "']
-	}
 	if cmd == 'diff' {
-		color_diff_cmd := '${diff_cmd} --color=always ${flags.join(' ')} ${os.quoted_path(path1)} ${os.quoted_path(path2)}'
+		color_diff_cmd := '${diff_cmd} --color=always ${diff.default_args.join(' ')} ${os.quoted_path(path1)} ${os.quoted_path(path2)}'
 		color_result := os.execute(color_diff_cmd)
 		if !color_result.output.starts_with('diff: unrecognized option') {
 			return color_result.output.trim_right('\r\n')
 		}
 	}
-	full_cmd := '${diff_cmd} ${flags.join(' ')} ${os.quoted_path(path1)} ${os.quoted_path(path2)}'
+	full_cmd := '${diff_cmd} ${diff.default_args.join(' ')} ${os.quoted_path(path1)} ${os.quoted_path(path2)}'
 	return os.execute(full_cmd).output.trim_right('\r\n')
 }
 
 // color_compare_strings returns a colored diff between two strings.
+@[deprecated: 'use `compare_text` instead']
+@[deprecated_after: '2024-05-31']
 pub fn color_compare_strings(diff_cmd string, unique_prefix string, expected string, found string) string {
 	tmp_dir := os.join_path_single(os.vtmp_dir(), unique_prefix)
 	os.mkdir(tmp_dir) or {}
