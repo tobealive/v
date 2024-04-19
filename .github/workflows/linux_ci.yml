@@ -28,16 +28,6 @@ jobs:
       VFLAGS: -cc tcc -no-retry-compilation
     steps:
       - uses: actions/checkout@v4
-      - name: Install dependencies
-        run: |
-          $RETRY sudo apt-get update
-          $RETRY sudo apt-get install --quiet -y libssl-dev sqlite3 libsqlite3-dev valgrind
-          $RETRY sudo apt-get install --quiet -y libfreetype6-dev  libxi-dev libxcursor-dev libgl-dev
-          # The following is needed for examples/wkhtmltopdf.v
-          $RETRY wget https://github.com/wkhtmltopdf/packaging/releases/download/0.12.6-1/wkhtmltox_0.12.6-1.focal_amd64.deb
-          $RETRY sudo apt-get install --quiet -y xfonts-75dpi xfonts-base
-          $RETRY sudo apt-get install --quiet -y expect
-          $RETRY sudo dpkg -i wkhtmltox_0.12.6-1.focal_amd64.deb
       - name: Build v
         run: |
           echo $VFLAGS
@@ -67,6 +57,16 @@ jobs:
         run: ./v test-cleancode
       - name: Test pure V math module
         run: ./v -exclude @vlib/math/*.c.v test vlib/math/
+      - name: Install dependencies
+        run: |
+          v retry sudo apt-get update
+          v retry -- sudo apt-get install --quiet -y libssl-dev sqlite3 libsqlite3-dev valgrind
+          v retry -- sudo apt-get install --quiet -y libfreetype6-dev  libxi-dev libxcursor-dev libgl-dev
+          # The following is needed for examples/wkhtmltopdf.v
+          v retry -- wget https://github.com/wkhtmltopdf/packaging/releases/download/0.12.6-1/wkhtmltox_0.12.6-1.focal_amd64.deb
+          v retry -- sudo apt-get install --quiet -y xfonts-75dpi xfonts-base
+          v retry -- sudo apt-get install --quiet -y expect
+          v retry -- sudo dpkg -i wkhtmltox_0.12.6-1.focal_amd64.deb
       - name: Self tests
         run: ./v test-self
       # - name: Self tests (-cstrict)
