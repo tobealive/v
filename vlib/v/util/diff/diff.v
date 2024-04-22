@@ -7,31 +7,36 @@ enum DiffTool {
 	@none
 	colordiff
 	diff
-	opendiff
 }
 
 @[params]
 pub struct CompareOptions {
 pub:
-	cmd   DiffTool
-	args  []string
-	color bool = true // will attempt to provide a colored diff result.
+	cmd            DiffTool
+	args           []string
+	color          bool = true // will attempt to provide a colored diff result.
+	allow_env_tool bool = true
 }
 
 // NOTE:
-// - `code` won't return a string / not diff tool tool for the job
-//   - Only via env opts
-// - `gdiff` ?
-// TODO: checkout opendiff
-// Unrecoverable errors instead of letting users handle them is imho untanable.
+// - Tools like `code` and `opendiff` that won't do what the function states returning a string but
+// open the file in a GUI will not be taken into account be default but only via env opts.
+// - Unrecoverable errors instead of letting users handle them is imho untanable.
 
 // compare_files returns a string displaying the differences between two files.
 pub fn compare_files(path1 string, path2 string, opts CompareOptions) !string {
-	tool := if opts.cmd == .@none { find_working_diff_command()! } else { opts.cmd.str() }
-	cmd := tool.all_before(' ')
-	os.find_abs_path_of_executable(cmd) or {
-		return error('failed to find comparison command `${cmd}`')
+	// TODO: abstract so it can be used in separate function.
+	tool := if opts.cmd == .@none {
+		env_tool := os.getenv('VDIFF_TOOL')
+		if opts.allow_env_tool && env_tool != '' {
+			env_tool
+		} else {
+			find_working_diff_cmd()!
+		}
+	} else {
+		opts.cmd.str()
 	}
+	os.find_abs_path_of_executable(tool) or { return error('failed to find comparison command `${tool}`') }
 	// TODO: args
 	flags := $if openbsd {
 		['-d', '-a', '-U', '2']
@@ -40,7 +45,7 @@ pub fn compare_files(path1 string, path2 string, opts CompareOptions) !string {
 	} $else {
 		['--minimal', '--text', '--unified=2', '--show-function-line="fn "']
 	}
-	if cmd == 'diff' {
+	if tool == 'diff' {
 		color_diff_cmd := '${tool} --color=always ${flags.join(' ')} ${os.quoted_path(path1)} ${os.quoted_path(path2)}'
 		color_result := os.execute(color_diff_cmd)
 		if !color_result.output.starts_with('diff: unrecognized option') {
@@ -70,33 +75,33 @@ pub fn compare_text(text1 string, text2 string, opts CompareOptions) !string {
 }
 
 fn find_working_diff_cmd() !string {
-	known_diff_tools := ['colordiff', 'diff', 'colordiff.exe', 'diff.exe', 'opendiff']
+	known_diff_tools := [DiffTool.colordiff, .diff]
 	mut diff_cmd := ''
-	for cmd in known_diff_tools {
+	for tool in known_diff_tools {
+		cmd := tool.str()
 		os.find_abs_path_of_executable(cmd) or { continue }
 		diff_cmd = cmd
 		break
 	}
+	$if windows {
+		if diff_cmd == '' {
+			for tool in known_diff_tools {
+				cmd := '${tool.str()}.exe'
+				os.find_abs_path_of_executable(cmd) or { continue }
+				diff_cmd = cmd
+				break
+			}
+		}
+	}
 	if diff_cmd == '' {
 		return error('No working "diff" command found')
 	}
-	// TODO: env opts
-	if diff_cmd in ['code', 'code.cmd'] {
-		// Make sure the diff flag `-d` is included in any case.
-		return '${diff_cmd} ${env_diffopts} -d'
-	}
-	// Don't add spaces to the cmd if there are no `env_diffopts`.
-	return if env_diffopts != '' { '${diff_cmd} ${env_diffopts}' } else { diff_cmd }
-}
-
-fn get_env_opts() (string, string) {
-	env_difftool := os.getenv('VDIFF_TOOL')
-	env_diffopts := os.getenv('VDIFF_OPTIONS')
+	return diff_cmd
 }
 
 // find_working_diff_command returns the first available command from a list of known diff cli tools.
-@[deprecated]
 @[deprecated_after: '2024-05-31']
+@[deprecated]
 pub fn find_working_diff_command() !string {
 	env_difftool := os.getenv('VDIFF_TOOL')
 	env_diffopts := os.getenv('VDIFF_OPTIONS')
