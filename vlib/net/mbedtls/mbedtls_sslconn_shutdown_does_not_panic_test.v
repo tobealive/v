@@ -40,7 +40,15 @@ fn test_shutdown_does_not_panic() {
 	time.sleep(1 * time.second)
 	mut background := context.background()
 	mut ctx, cancel := context.with_timeout(mut background, 2 * time.second)
-	spawn read_input()
+	spawn fn () {
+		mut i := 0
+		for {
+			i++
+			print('\r${i}...')
+			flush_stdout()
+			time.sleep(1 * time.second)
+		}
+	}()
 	mut done := ctx.done()
 	for {
 		select {
@@ -50,7 +58,7 @@ fn test_shutdown_does_not_panic() {
 		}
 	}
 
-	eprintln('Timeout without panic - OK')
+	eprintln('\nTimeout without panic - OK')
 
 	assert true
 }
