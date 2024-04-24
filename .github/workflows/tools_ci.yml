@@ -25,7 +25,7 @@ jobs:
     strategy:
       matrix:
         os: [ubuntu-20.04, windows-2019, macos-12]
-        optimization: ['', -prod]
+        optimization: ['', -prod, -cstrict]
         include:
           - os: ubuntu-20.04
             cc: tcc
@@ -47,6 +47,10 @@ jobs:
           - optimization: -cflags -fsanitize=memory
             os: ubuntu-20.04
             cc: clang
+          - optimization: -cflags -fsanitize=undefined,shift,shift-exponent,shift-base,integer-divide-by-zero,unreachable,vla-bound,null,return,signed-integer-overflow,bounds,bounds-strict,alignment,object-size,float-divide-by-zero,float-cast-overflow,nonnull-attribute,returns-nonnull-attribute,bool,enum,vptr,pointer-overflow,builtin
+            os: ubuntu-20.04
+            cc: gcc
+
       fail-fast: false
     runs-on: ${{ matrix.os }}
     env:
