@@ -53,9 +53,6 @@ jobs:
       VFLAGS: -cc ${{ matrix.cc }}
     steps:
       - uses: actions/checkout@v4
-      - name: Install dependencies
-        if: runner.os == 'Linux'
-        run: sudo apt install valgrind
       - name: Build V
         if: runner.os != 'Windows'
         run: make -j4 && ./v ${{ matrix.optimization }} -showcc -o v cmd/v && ./v doctor
