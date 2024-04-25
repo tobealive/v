@@ -4,23 +4,22 @@ import os
 import time
 
 // TODO: windows tool
-enum DiffTool {
+pub enum DiffTool {
 	@none
 	colordiff
 	diff
+	delta
+	from_env
 }
 
 @[params]
 pub struct CompareOptions {
 pub:
-	cmd            DiffTool
-	args           []string
-	color          bool = true // will attempt to provide a colored diff result.
-	allow_env_tool bool = true
+	cmd   DiffTool
+	args  string
+	color bool = true // will attempt to provide a colored diff result.
 }
 
-const env_tool = os.getenv('VDIFF_TOOL')
-const env_args = os.getenv('VDIFF_OPTIONS')
 const default_args = $if openbsd {
 	['-d', '-a', '-U', '2']
 } $else $if freebsd {
@@ -70,24 +69,20 @@ pub fn compare_text(text1 string, text2 string, opts CompareOptions) !string {
 }
 
 fn get_tool(opts CompareOptions) !string {
-	return if opts.cmd == .@none {
-		if opts.allow_env_tool && diff.env_tool != '' {
-			diff.env_tool
-		} else {
-			find_working_diff_cmd()!
-		}
-	} else {
-		opts.cmd.str()
+	return match opts.cmd {
+		.@none { find_working_diff_cmd()! }
+		.from_env { os.getenv('VDIFF_TOOL') }
+		else { opts.cmd.str() }
 	}
 }
 
 fn get_args(opts CompareOptions) (string, bool) {
-	return if opts.allow_env_tool && diff.env_args != '' {
-		diff.env_args, false
-	} else if opts.args.len > 0 {
-		opts.args.join(' '), false
-	} else {
-		default_args.join(' '), true
+	env_args := os.getenv('VDIFF_OPTIONS')
+	return match true {
+		opts.cmd == .from_env && env_args != '' { env_args, false }
+		opts.args != '' { opts.args, false }
+		opts.cmd == .delta { '', false }
+		else { diff.default_args.join(' '), true }
 	}
 }
 
@@ -154,13 +149,13 @@ pub fn color_compare_files(diff_cmd string, path1 string, path2 string) string {
 	cmd := diff_cmd.all_before(' ')
 	os.find_abs_path_of_executable(cmd) or { return 'comparison command: `${cmd}` not found' }
 	if cmd == 'diff' {
-		color_diff_cmd := '${diff_cmd} --color=always ${default_args.join(' ')} ${os.quoted_path(path1)} ${os.quoted_path(path2)}'
+		color_diff_cmd := '${diff_cmd} --color=always ${diff.default_args.join(' ')} ${os.quoted_path(path1)} ${os.quoted_path(path2)}'
 		color_result := os.execute(color_diff_cmd)
 		if !color_result.output.starts_with('diff: unrecognized option') {
 			return color_result.output.trim_right('\r\n')
 		}
 	}
-	full_cmd := '${diff_cmd} ${default_args.join(' ')} ${os.quoted_path(path1)} ${os.quoted_path(path2)}'
+	full_cmd := '${diff_cmd} ${diff.default_args.join(' ')} ${os.quoted_path(path1)} ${os.quoted_path(path2)}'
 	return os.execute(full_cmd).output.trim_right('\r\n')
 }
 

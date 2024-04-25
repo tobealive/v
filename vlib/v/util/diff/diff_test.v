@@ -36,34 +36,43 @@ fn test_compare_files() {
 	os.write_file(p1, f1)!
 	os.write_file(p2, f2)!
 
-	mut res := diff.color_compare_files('diff', p1, p2)
+	mut res := diff.compare_files(p1, p2)!
 	assert res.contains("-\tname: 'Foo'"), res
 	assert res.contains("+\tname: 'foo'"), res
 	assert res.contains("-\tversion: '0.0.0'"), res
 	assert res.contains("+\tversion: '0.1.0'"), res
 	assert res.contains("+\tlicense: 'MIT'"), res
+	// Test deprecated
+	assert res == diff.color_compare_files('diff', p1, p2)
 
-	// Test adding a flag to the command.
-	res = diff.color_compare_files('diff --ignore-case', p1, p2)
+	// Test adding custom options to the command.
+	res = diff.compare_files(p1, p2, args: ['-U 2', '-i', '--color=always'].join(' '))!
 	assert !res.contains("+\tname: 'foo'"), res
 	assert res.contains("-\tversion: '0.0.0'"), res
 	assert res.contains("+\tversion: '0.1.0'"), res
 	assert res.contains("+\tlicense: 'MIT'"), res
+	// Test deprecated
+	assert res == diff.color_compare_files('diff --ignore-case', p1, p2)
 
 	// Test again using `find_working_diff_command()`.
 	os.setenv('VDIFF_TOOL', 'diff', true)
-	res = diff.color_compare_files(diff.find_working_diff_command()!, p1, p2)
+	res = diff.compare_files(p1, p2, cmd: .from_env)!
 	assert res.contains("-\tversion: '0.0.0'"), res
 	assert res.contains("+\tversion: '0.1.0'"), res
 	assert res.contains("+\tlicense: 'MIT'"), res
+	// Test deprecated
+	assert res == diff.color_compare_files(diff.find_working_diff_command()!, p1, p2)
 
 	// Test adding a flag via env flag.
-	os.setenv('VDIFF_OPTIONS', '--ignore-case', true) // ignored, when VDIFF_TOOL is not explicitly set
-	res = diff.color_compare_files(diff.find_working_diff_command()!, p1, p2)
+	os.setenv('VDIFF_OPTIONS', '--ignore-case -U 2 --color=always', true)
+	res = diff.compare_files(p1, p2, cmd: .from_env)!
 	assert !res.contains("+\tname: 'foo'"), res
 	assert res.contains("-\tversion: '0.0.0'"), res
 	assert res.contains("+\tversion: '0.1.0'"), res
 	assert res.contains("+\tlicense: 'MIT'"), res
+	// Test deprecated
+	os.setenv('VDIFF_OPTIONS', '--ignore-case', true)
+	assert res == diff.color_compare_files(diff.find_working_diff_command()!, p1, p2)
 }
 
 fn test_coloring() {
@@ -77,8 +86,10 @@ fn test_coloring() {
 	p2 := os.join_path(tdir, '${@FN}_f2.txt')
 	os.write_file(p1, f1)!
 	os.write_file(p2, f2)!
-	res := diff.color_compare_files('diff', p1, p2)
 	esc := rune(27)
+	res := diff.compare_files(p1, p2, cmd: .diff)!
 	assert res.contains('${esc}[31m-abc${esc}['), res
 	assert res.contains('${esc}[32m+abcd${esc}['), res
+	// Test deprecated
+	assert res == diff.color_compare_files('diff', p1, p2)
 }
