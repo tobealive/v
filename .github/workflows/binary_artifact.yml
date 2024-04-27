@@ -26,20 +26,24 @@ jobs:
           - os: ubuntu-20.04
             cc: gcc
           - os: ubuntu-20.04
-            artifact: v_linux
+            target: linux
+            artifact: v_linux.zip
           - os: macos-13
             cc: clang
           - os: macos-13
-            artifact: v_macos_x86_64
+            target: macos_x86_64
+            artifact: v_macos_x86_64.zip
           - os: macos-14
             cc: clang
           - os: macos-14
-            artifact: v_macos_arm64
+            target: macos_arm64
+            artifact: v_macos_arm64.zip
           - os: macos-14
             cflags: -cflags "-target arm64-apple-darwin"
           - os: windows-latest
             cc: msvc
-            artifact: v_windows
+            target: windows
+            artifact: v_windows.zip
       fail-fast: false
     steps:
       - uses: actions/checkout@v4
@@ -67,24 +71,32 @@ jobs:
             git clone --branch thirdparty-macos-arm64 --depth=1 https://github.com/vlang/tccbin thirdparty/tcc
           fi
           # Remove excluded
-          rm -rf .git/ thirdparty/tcc/.git vc/ v_old vlib/v/tests/bench/gcboehm/*.svg
+          if [[ $RUNNER_OS == 'Windows' ]]; then
+            rm -rf v_old.exe
+            find |grep pdb$|xargs rm -rf
+            find |grep ilk$|xargs rm -rf
+          fi
+          find |grep "\.git"$|xargs rm -rf
+          rm -rf vc/
+          rm -rf v_old
+          rm -rf vlib/v/tests/bench/gcboehm/*.svg
       - name: Create ZIP archive
         shell: bash
         run: |
           cd ..
           if [[ $RUNNER_OS == 'Windows' ]]; then
-            7z a -tzip ${{ matrix.artifact }}.zip v/
+            7z a -tzip ${{ matrix.artifact }} v/
           else
-            zip -r9 --symlinks ${{ matrix.artifact }}.zip v/
+            zip -r9 --symlinks ${{ matrix.artifact }} v/
           fi
-          zipinfo ${{ matrix.artifact }}.zip
-          mv ${{ matrix.artifact }}.zip v/
+          zipinfo ${{ matrix.artifact }}
+          mv ${{ matrix.artifact }} v/
           cd v/
       - name: Create artifact
         uses: actions/upload-artifact@v4
         with:
-          name: ${{ matrix.artifact }}
-          path: ${{ matrix.artifact }}.zip
+          name: ${{ matrix.target }}
+          path: ${{ matrix.artifact }}
 
   release:
     name: Create Github Release
