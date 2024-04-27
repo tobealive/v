@@ -40,7 +40,7 @@ jobs:
         ./v -showcc -gc none -cc tcc -no-retry-compilation run examples/hello_world.v
 
   macos-x86_64:
-    runs-on: macos-latest
+    runs-on: macos-13
     timeout-minutes: 5
     steps:
     - name: Download V
@@ -61,11 +61,11 @@ jobs:
     - name: Download V
       run: |
         curl -L https://github.com/vlang/v/releases/latest/download/v_windows.zip -o v_windows.zip
-        unzip .\v_windows.zip
+        unzip ./v_windows.zip
         cd v
-        .\v.exe -version
+        ./v -version
     - name: Test V
       run: |
         cd v
-        .\v.exe run .\examples\hello_world.v
-        .\v.exe -showcc -gc none -cc tcc -no-retry-compilation run .\examples/hello_world.v
+        ./v run ./examples/hello_world.v
+        ./v -showcc -gc none -cc tcc -no-retry-compilation run ./examples/hello_world.v

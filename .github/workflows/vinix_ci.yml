@@ -4,14 +4,14 @@ on:
   workflow_call:
   pull_request:
     paths-ignore:
-      - "**.md"
+      - '**.md'
   push:
     branches:
       - master
     paths-ignore:
-      - "**.md"
-      - "**.yml"
-      - "!**/vinix_ci.yml"
+      - '**.md'
+      - '**.yml'
+      - '!**/vinix_ci.yml'
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref == 'refs/heads/master' && github.sha || github.ref }}
@@ -32,7 +32,7 @@ jobs:
           .github/workflows/retry.sh sudo apt install build-essential meson -y
 
       - name: Build V
-        run: make
+        run: make -j4
 
       - name: Clone current Vinix
         run: .github/workflows/retry.sh git clone https://github.com/vlang/vinix.git

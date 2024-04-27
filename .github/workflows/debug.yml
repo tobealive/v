@@ -12,10 +12,8 @@ jobs:
       - uses: actions/checkout@v4
       - name: Build
         run: |
-          echo %VFLAGS%
-          echo $VFLAGS
-          ./make.bat -msvc
-          ./v -cflags /WX self
+          echo %VFLAGS% && echo $VFLAGS
+          ./make.bat -msvc && ./v -cflags /WX self
       - name: Install dependencies
         run: |
           ./v setup-freetype

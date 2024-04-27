@@ -3,12 +3,12 @@ name: toml CI
 on:
   push:
     paths-ignore:
-      - "**.md"
+      - '**.md'
       - '**.yml'
       - '!**/toml_ci.yml'
   pull_request:
     paths-ignore:
-      - "**.md"
+      - '**.md'
       - '**.yml'
       - '!**/toml_ci.yml'
 
@@ -26,8 +26,9 @@ jobs:
         run: |
           .github/workflows/retry.sh sudo apt update
           .github/workflows/retry.sh sudo apt install --quiet -y jq libgc-dev
+
       - name: Build V
-        run: make
+        run: make -j4
 
       - name: Show JQ Version
         run: jq --version

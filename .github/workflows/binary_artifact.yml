@@ -21,18 +21,13 @@ jobs:
           ./v -skip-unused -cc $CC -prod cmd/tools/vup.v
           ./v -skip-unused -cc $CC -prod cmd/tools/vdoctor.v
       - name: Remove excluded
-        run: |
-           rm -rf .git/
-           rm -rf thirdparty/tcc/.git/
-           rm -rf vc/
-           rm -rf v_old
-           rm -rf vlib/v/tests/bench/gcboehm/*.svg
+        run: rm -rf .git/ thirdparty/tcc/.git/ vc/ v_old vlib/v/tests/bench/gcboehm/*.svg
       - name: Create ZIP archive
         run: |
-           cd ..
-           zip -r9 --symlinks $ZIPNAME v/
-           mv $ZIPNAME v/
-           cd v/
+          cd ..
+          zip -r9 --symlinks $ZIPNAME v/
+          mv $ZIPNAME v/
+          cd v/
       - name: Create artifact
         uses: actions/upload-artifact@v4
         with:
@@ -53,18 +48,13 @@ jobs:
           ./v -skip-unused -cc $CC -prod cmd/tools/vup.v
           ./v -skip-unused -cc $CC -prod cmd/tools/vdoctor.v
       - name: Remove excluded
-        run: |
-           rm -rf .git/
-           rm -rf thirdparty/tcc/.git/
-           rm -rf vc/
-           rm -rf v_old
-           rm -rf vlib/v/tests/bench/gcboehm/*.svg
+        run: rm -rf .git/ thirdparty/tcc/.git/ vc/ v_old vlib/v/tests/bench/gcboehm/*.svg
       - name: Create ZIP archive
         run: |
-           cd ..
-           zip -r9 --symlinks $ZIPNAME v/
-           mv $ZIPNAME v/
-           cd v/
+          cd ..
+          zip -r9 --symlinks $ZIPNAME v/
+          mv $ZIPNAME v/
+          cd v/
       - name: Create artifact
         uses: actions/upload-artifact@v4
         with:
@@ -88,21 +78,16 @@ jobs:
           ./v -cflags "$TARGET_CFLAGS" -prod -o v cmd/v
       - name: Get correct TCC for ARM64
         run: |
-           rm -rf thirdparty/tcc
-           git clone $TCC_OPTS https://github.com/vlang/tccbin thirdparty/tcc
+          rm -rf thirdparty/tcc
+          git clone $TCC_OPTS https://github.com/vlang/tccbin thirdparty/tcc
       - name: Remove excluded
-        run: |
-           rm -rf .git/
-           rm -rf thirdparty/tcc/.git/
-           rm -rf vc/
-           rm -rf v_old
-           rm -rf vlib/v/tests/bench/gcboehm/*.svg
+        run: rm -rf .git/ thirdparty/tcc/.git/ vc/ v_old vlib/v/tests/bench/gcboehm/*.svg
       - name: Create ZIP archive
         run: |
-           cd ..
-           zip -r9 --symlinks $ZIPNAME v/
-           mv $ZIPNAME v/
-           cd v/
+          cd ..
+          zip -r9 --symlinks $ZIPNAME v/
+          mv $ZIPNAME v/
+          cd v/
       - name: Create artifact
         uses: actions/upload-artifact@v4
         with:
@@ -119,30 +104,25 @@ jobs:
       - uses: msys2/setup-msys2@v2
       - name: Compile needed executables with -prod
         run: |
-          .\make.bat -msvc
-          .\v.exe -skip-unused -prod -cc msvc -o cmd/vprod.exe cmd/v
+          ./make.bat -msvc
+          ./v -skip-unused -prod -cc msvc -o cmd/vprod.exe cmd/v
           del *.exe
           move cmd\vprod.exe v.exe
-          .\v.exe -skip-unused -prod -cc msvc cmd\tools\vup.v
-          .\v.exe -skip-unused -prod -cc msvc cmd\tools\vdoctor.v
+          ./v -skip-unused -prod -cc msvc cmd\tools\vup.v
+          ./v -skip-unused -prod -cc msvc cmd\tools\vdoctor.v
       - name: Remove excluded
         shell: msys2 {0}
-        run: |
-           rm -rf .git/
-           rm -rf thirdparty/tcc/.git/
-           rm -rf vc/
-           rm -rf v_old.exe
-           rm -rf vlib/v/tests/bench/gcboehm/*.svg
+        run: rm -rf .git/ thirdparty/tcc/.git/ vc/ v_old.exe vlib/v/tests/bench/gcboehm/*.svg
       - name: Create archive
         shell: msys2 {0}
         run: |
-           cd ..
-           powershell Compress-Archive v $ZIPNAME
-           mv $ZIPNAME v/
-           cd v/
-# NB: the powershell Compress-Archive line is from:
-# https://superuser.com/a/1336434/194881
-# It is needed, because `zip` is not installed by default :-|
+          cd ..
+          powershell Compress-Archive v $ZIPNAME
+          mv $ZIPNAME v/
+          cd v/
+      # NB: the powershell Compress-Archive line is from:
+      # https://superuser.com/a/1336434/194881
+      # It is needed, because `zip` is not installed by default :-|
       - name: Create artifact
         uses: actions/upload-artifact@v4
         with:

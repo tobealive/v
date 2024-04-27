@@ -41,7 +41,7 @@ jobs:
         run: apk add libc6-compat
 
       - name: Build V
-        run: make
+        run: make -j4
 
       - name: Verify formatting
         run: VJOBS=1 ./v test-cleancode

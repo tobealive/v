@@ -25,7 +25,7 @@ jobs:
 
       - name: Build V
         id: build
-        run: make && sudo ./v symlink
+        run: make -j4 && sudo ./v symlink
 
       - name: Install dependencies
         run: |
@@ -68,8 +68,8 @@ jobs:
           v retry -- v install vab
           echo "Build vab"
           v ~/.vmodules/vab
-          echo "Build vab with -gc boehm -skip-unused"
-          v -g -gc boehm -skip-unused ~/.vmodules/vab
+          echo "Build vab with -skip-unused"
+          v -g -skip-unused ~/.vmodules/vab
 
       - name: Build vlang/ved
         if: ${{ !cancelled() && steps.build.outcome == 'success' }}
@@ -210,7 +210,7 @@ jobs:
 
       - name: Build V
         id: build
-        run: make && sudo ./v symlink
+        run: make -j4 && sudo ./v symlink
 
       - name: Install dependencies
         run: |
@@ -261,7 +261,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - name: Build V
-        run: make && ./v symlink
+        run: make -j4 && ./v symlink
       - name: Build vpm
         run: |
           v retry -- v install markdown

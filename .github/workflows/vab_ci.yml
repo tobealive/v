@@ -4,12 +4,12 @@ on:
   workflow_call:
   push:
     paths-ignore:
-      - "**.md"
+      - '**.md'
       - '**.yml'
       - '!**/vab_ci.yml'
   pull_request:
     paths-ignore:
-      - "**.md"
+      - '**.md'
       - '**.yml'
       - '!**/vab_ci.yml'
 
@@ -31,7 +31,7 @@ jobs:
 
       - uses: actions/checkout@v4
       - name: Build V
-        run: make && sudo ./v symlink
+        run: make -j4 && sudo ./v symlink
 
       - name: Install vab
         run: |
@@ -66,7 +66,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - name: Build V
-        run: make && sudo ./v symlink
+        run: make -j4 && sudo ./v symlink
 
       - name: Install vab
         run: |

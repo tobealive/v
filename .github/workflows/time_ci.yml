@@ -22,7 +22,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - name: Build V
-        run: make
+        run: make -j4
       - name: Test time functions in a timezone UTC-12
         run: TZ=Etc/GMT+12 ./v test vlib/time/
       - name: Test time functions in a timezone UTC-3
@@ -39,7 +39,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - name: Build V
-        run: make
+        run: make -j4
       - name: Test time functions in a timezone UTC-12
         run: TZ=Etc/GMT+12 ./v test vlib/time/
       - name: Test time functions in a timezone UTC-3
@@ -56,7 +56,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - name: Build V
-        run: .\make.bat
+        run: ./make.bat
       - name: Test time functions in a timezone UTC-12
         run: tzutil /s "Dateline Standard Time" && ./v test vlib/time/
       - name: Test time functions in a timezone UTC-3
