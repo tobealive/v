@@ -4,10 +4,12 @@ on:
   push:
     paths-ignore:
       - '**.md'
+      - '**.yml'
       - '!**/paths_ci.yml'
   pull_request:
     paths-ignore:
       - '**.md'
+      - '**.yml'
       - '!**/paths_ci.yml'
 
 concurrency:

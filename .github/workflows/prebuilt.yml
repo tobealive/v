@@ -2,6 +2,9 @@ name: Test prebuilt binaries
 
 on:
   workflow_dispatch:
+  pull_request:
+    paths:
+      - '**/prebuilt.yml'
   release:
     types: [edited, published]
 

@@ -37,9 +37,9 @@ jobs:
       - name: Run websockets tests
         run: ./v -g test vlib/net/websocket/
 
-      ## Autobahn integrations tests
+        ## Autobahn integrations tests
       - name: Run autobahn services
-        run: docker-compose -f ${{github.workspace}}/vlib/net/websocket/tests/autobahn/docker-compose.yml up -d
+        run: docker-compose -f ${{ github.workspace }}/vlib/net/websocket/tests/autobahn/docker-compose.yml up -d
 
       - name: Wait for the service to start
         run: sleep 10s
@@ -54,15 +54,19 @@ jobs:
 
       - name: Run client wss test
         run: docker exec autobahn_client "/src/vlib/net/websocket/tests/autobahn/autobahn_client_wss"
+
       - name: Run server test
         run: docker exec autobahn_server "wstest" "-m" "fuzzingclient" "-s" "/config/fuzzingclient.json"
 
       - name: Copy reports
-        run: docker cp autobahn_server:/reports ${{github.workspace}}/reports
+        run: docker cp autobahn_server:/reports ${{ github.workspace }}/reports
+
       - name: Copy reports wss
-        run: docker cp autobahn_server_wss:/reports ${{github.workspace}}/reports_wss
+        run: docker cp autobahn_server_wss:/reports ${{ github.workspace }}/reports_wss
+
       - name: Test success
         run: docker exec autobahn_server "python" "/check_results.py"
+
       - name: Test success WSS
         run: docker exec autobahn_server_wss "python" "/check_results.py"
 
@@ -70,28 +74,28 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: full report
-          path: ${{github.workspace}}/reports
+          path: ${{ github.workspace }}/reports
 
       - name: Publish report client
         uses: actions/upload-artifact@v4
         with:
           name: client
-          path: ${{github.workspace}}/reports/clients/index.html
+          path: ${{ github.workspace }}/reports/clients/index.html
 
       - name: Publish report server
         uses: actions/upload-artifact@v4
         with:
           name: server
-          path: ${{github.workspace}}/reports/servers/index.html
+          path: ${{ github.workspace }}/reports/servers/index.html
 
       - name: Publish all reports WSS
         uses: actions/upload-artifact@v4
         with:
           name: full report wss
-          path: ${{github.workspace}}/reports_wss
+          path: ${{ github.workspace }}/reports_wss
 
       - name: Publish report client wss
         uses: actions/upload-artifact@v4
         with:
           name: client wss
-          path: ${{github.workspace}}/reports_wss/clients/index.html
+          path: ${{ github.workspace }}/reports_wss/clients/index.html
