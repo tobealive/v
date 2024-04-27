@@ -56,7 +56,13 @@ fn main() {
 				continue
 			}
 			api_os := app.gen_api_for_module_in_os(mname, oname)
-			app.compare_api(api_base, api_os, mname, base_os, oname)
+			if api_base != api_os {
+				summary := 'Different APIs found for module: `${mod_name}`, between OS base: `${os_base}` and OS: `${os_target}`'
+				eprintln(term.header(summary, '-'))
+				println(diff.compare_text(api_base, api_os, allow_env_overwrite: true)!)
+				eprintln(term.h_divider('-'))
+				app.api_differences[mod_name] = 1
+			}
 		}
 	}
 	howmany := app.api_differences.len
@@ -113,15 +119,4 @@ fn (app App) gen_api_for_module_in_os(mod_name string, os_name string) string {
 	}
 	res.sort()
 	return res.join('\n')
-}
-
-fn (mut app App) compare_api(api_base string, api_os string, mod_name string, os_base string, os_target string) {
-	res := diff.color_compare_strings(app.diff_cmd, rand.ulid(), api_base, api_os)
-	if res.len > 0 {
-		summary := 'Different APIs found for module: `${mod_name}`, between OS base: `${os_base}` and OS: `${os_target}`'
-		eprintln(term.header(summary, '-'))
-		eprintln(res)
-		eprintln(term.h_divider('-'))
-		app.api_differences[mod_name] = 1
-	}
 }

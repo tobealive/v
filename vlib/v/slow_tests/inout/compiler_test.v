@@ -99,12 +99,9 @@ fn test_all() {
 			println(expected)
 			println(term.header('found:', '-'))
 			println(found)
-			if diff_cmd != '' {
-				println(term.header('difference:', '-'))
-				println(diff.color_compare_strings(diff_cmd, rand.ulid(), expected, found))
-			} else {
-				println(term.h_divider('-'))
-			}
+			println(term.header('difference:', '-'))
+			println(diff.compare_text(expected, found)!)
+			println(term.h_divider('-'))
 			total_errors++
 		} else {
 			println(term.green('OK'))

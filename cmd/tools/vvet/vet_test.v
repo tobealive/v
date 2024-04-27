@@ -4,13 +4,6 @@ import term
 import v.util.vtest
 import v.util.diff
 
-const diff_cmd = find_diff_cmd()
-
-fn find_diff_cmd() string {
-	res := diff.find_working_diff_command() or { '' }
-	return res
-}
-
 fn test_vet() {
 	vexe := os.getenv('VEXE')
 	vroot := os.dir(vexe)
@@ -51,7 +44,7 @@ fn check_path(vexe string, dir string, tests []string) int {
 			println(found)
 			println('============\n')
 			println('diff:')
-			println(diff.color_compare_strings(diff_cmd, rand.ulid(), expected, found))
+			println(diff.compare_text(expected, found, allow_env_overwrite: true)!)
 			println('============\n')
 			nb_fail++
 		} else {
