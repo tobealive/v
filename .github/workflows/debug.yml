@@ -28,9 +28,9 @@ jobs:
         run: ./v test-cleancode
       - name: Self tests
         run: ./v -cg cmd\tools\vtest-self.v && ./v test-self
-      - name: Test v->js
+      - name: Test V->JS
         run: ./v -o hi.js examples/hello_v_js.v && node hi.js
-      - name: Test v binaries
+      - name: Test V binaries
         run: ./v build-vbinaries
       - name: Build examples
         run: ./v build-examples

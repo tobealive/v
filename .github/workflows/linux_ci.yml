@@ -122,9 +122,9 @@ jobs:
           UBSAN_OPTIONS=print_stacktrace=1:halt_on_error=1 ./v3 -o v.c cmd/v
       # - name: Test V
       #   run: ./v test-all
-      # - name: Test v binaries
+      # - name: Test V binaries
       #   run: ./v build-vbinaries
-      # - name: Test v->js
+      # - name: Test V->JS
       #   run: ./v -o hi.js examples/hello_v_js.v && node hi.js
       # - name: Build Vorum
       #   run: .github/workflows/retry.sh git clone --depth 1 https://github.com/vlang/vorum && cd vorum && ../v . && cd ..

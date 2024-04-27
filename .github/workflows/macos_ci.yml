@@ -51,11 +51,11 @@ jobs:
       #     psql -d postgres -c 'select rolname from pg_roles'
       #     psql -d postgres -c 'create database customerdb;'
       #     psql -d customerdb -f examples/database/pg/mydb.sql
-      # - name: Test v->c
+      # - name: Test V->C
       #   run: ./v test-all
-      # - name: Test v binaries
+      # - name: Test V binaries
       #   run: ./v build-vbinaries
-      # - name: Test v->js
+      # - name: Test V->JS
       #   run: ./v -o hi.js examples/hello_v_js.v && node hi.js
       - name: Verify `v test` works
         run: |
