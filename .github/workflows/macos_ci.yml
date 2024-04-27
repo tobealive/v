@@ -82,14 +82,14 @@ jobs:
           ./v doctor
       - name: Test ved
         run: |
-          .github/workflows/retry.sh git clone --depth 1 https://github.com/vlang/ved
+          ./v retry -- git clone --depth 1 https://github.com/vlang/ved
           cd ved && ../v -o ved .
           ../v -autofree .
           ../v -prod .
           cd ..
       - name: Build V UI examples
         run: |
-          .github/workflows/retry.sh git clone --depth 1 https://github.com/vlang/ui
+          ./v retry -- git clone --depth 1 https://github.com/vlang/ui
           cd ui
           mkdir -p ~/.vmodules
           ln -s $(pwd) ~/.vmodules/ui

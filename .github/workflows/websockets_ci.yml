@@ -25,7 +25,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - name: Install dependencies
-        run: .github/workflows/retry.sh sudo apt install --quiet -y libssl-dev
+        run: .github/workflows/retry.sh sudo apt -qq install libssl-dev
       - name: Build V
         run: |
           echo $VFLAGS
