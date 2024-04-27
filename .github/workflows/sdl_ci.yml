@@ -4,13 +4,13 @@ on:
   workflow_dispatch:
   push:
     paths-ignore:
-      - "**.md"
-      - "**.yml"
+      - '**.md'
+      - '**.yml'
       - '!**/sdl_ci.yml'
   pull_request:
     paths-ignore:
-      - "**.md"
-      - "**.yml"
+      - '**.md'
+      - '**.yml'
       - '!**/sdl_ci.yml'
 
 concurrency:
