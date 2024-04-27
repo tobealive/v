@@ -57,7 +57,7 @@ jobs:
         run: |
           ./v cmd/tools/test_if_v_test_system_works.v
           ./cmd/tools/test_if_v_test_system_works
-      - name: All code is formatted
+      - name: Verify formatting
         run: ./v test-cleancode
       - name: Test pure V math module
         run: ./v -exclude @vlib/math/*.c.v test vlib/math/
@@ -67,9 +67,9 @@ jobs:
         run: ./v -W build-examples
       - name: Run the submodule example, using a relative path
         run: ./v -W run examples/submodule
-      - name: Build v tools
+      - name: Build V tools
         run: ./v -W build-tools
-      - name: Build v binaries
+      - name: Build V binaries
         run: ./v build-vbinaries
       - name: Build benches
         run: ./v should-compile-all vlib/v/tests/bench/
@@ -145,7 +145,7 @@ jobs:
           echo $VFLAGS
           ./v cmd/tools/test_if_v_test_system_works.v
           ./cmd/tools/test_if_v_test_system_works
-      - name: All code is formatted
+      - name: Verify formatting
         run: ./v test-cleancode
       - name: Test pure V math module
         run: ./v -exclude @vlib/math/*.c.v test vlib/math/
@@ -236,7 +236,7 @@ jobs:
           echo $VFLAGS
           ./v cmd/tools/test_if_v_test_system_works.v
           ./cmd/tools/test_if_v_test_system_works
-      - name: All code is formatted
+      - name: Verify formatting
         run: ./v test-cleancode
       - name: Test pure V math module
         run: ./v -exclude @vlib/math/*.c.v test vlib/math/
@@ -295,11 +295,11 @@ jobs:
   #   - name: Install dependencies
   #     run: |
   #        .github/workflows/retry.sh sudo apt install --quiet -y musl musl-tools libssl-dev sqlite3 libsqlite3-dev valgrind
-  #   - name: Build v
+  #   - name: Build V
   #     run: echo $VFLAGS && make -j4 && ./v -cg -o v cmd/v
-  #   # - name: Test v binaries
+  #   # - name: Test V binaries
   #   #   run: ./v build-vbinaries
-  #   # - name: Test v->js
+  #   # - name: Test V->JS
   #   #   run: ./v -o hi.js examples/hello_v_js.v && node hi.js
   #   - name: quick debug
   #     run: ./v -stats vlib/strconv/format_test.v

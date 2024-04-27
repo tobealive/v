@@ -3,13 +3,13 @@ name: Docker Alpine MUSL CI
 on:
   push:
     paths-ignore:
-      - "**.md"
-      - "**.yml"
+      - '**.md'
+      - '**.yml'
       - '!**/docker_alpine.yml'
   pull_request:
     paths-ignore:
-      - "**.md"
-      - "**.yml"
+      - '**.md'
+      - '**.yml'
       - '!**/docker_alpine.yml'
 
 concurrency:
@@ -25,30 +25,25 @@ jobs:
       env:
         V_CI_MUSL: 1
         VFLAGS: -cc gcc
+        CC: gcc
       volumes:
-        - ${{github.workspace}}:/opt/vlang
-
+        - ${{ github.workspace }}:/opt/vlang
     steps:
       - name: Checkout
         uses: actions/checkout@v4
-
       - name: Show Environment
         run: |
-          echo "PWD:"
-          pwd
-          echo "ENVIRONMENT:"
-          env
-          echo "C Compiler:"
-          gcc --version
+          echo "PWD:$pwd"
+          echo "ENVIRONMENT:$env"
+          echo "C Compiler:$(gcc --version)"
 
       - name: Add dependencies
-        run: |
-          apk add libc6-compat
+        run: apk add libc6-compat
 
       - name: Build V
-        run: CC=gcc make
+        run: make
 
-      - name: All code is formatted
+      - name: Verify formatting
         run: VJOBS=1 ./v test-cleancode
 
       - name: Run only essential tests

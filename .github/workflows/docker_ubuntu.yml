@@ -3,14 +3,14 @@ name: Docker Ubuntu MUSL CI
 on:
   push:
     paths-ignore:
-      - "**.md"
-      - "**.yml"
-      - "!**/docker_ubuntu.yml"
+      - '**.md'
+      - '**.yml'
+      - '!**/docker_ubuntu.yml'
   pull_request:
     paths-ignore:
-      - "**.md"
-      - "**.yml"
-      - "!**/docker_ubuntu.yml"
+      - '**.md'
+      - '**.yml'
+      - '!**/docker_ubuntu.yml'
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref == 'refs/heads/master' && github.sha || github.ref }}
@@ -27,22 +27,20 @@ jobs:
         V_CI_UBUNTU_MUSL: 1
         VFLAGS: -cc musl-gcc -gc none
       volumes:
-        - ${{github.workspace}}:/opt/vlang
+        - ${{ github.workspace }}:/opt/vlang
 
     steps:
       - name: Checkout
         uses: actions/checkout@v4
 
       - name: Build V
-        run: |
-          echo $VFLAGS && make -j4 && ./v -cg -o v cmd/v
+        run: echo $VFLAGS && make -j4 && ./v -cg -o v cmd/v
       - name: Verify `v test` works
         run: |
-          echo $VFLAGS
           ./v cmd/tools/test_if_v_test_system_works.v
           ./cmd/tools/test_if_v_test_system_works
 
-      - name: All code is formatted
+      - name: Verify formatting
         run: ./v test-cleancode
 
       - name: Test V fixed tests

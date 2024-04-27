@@ -48,7 +48,7 @@ jobs:
           echo $VFLAGS
           ./v cmd/tools/test_if_v_test_system_works.v
           ./cmd/tools/test_if_v_test_system_works
-      - name: All code is formatted
+      - name: Verify formatting
         run: ./v test-cleancode
       - name: Test pure V math module
         run: ./v -exclude @vlib/math/*.c.v test vlib/math/
@@ -91,7 +91,7 @@ jobs:
         run: |
           ./v cmd/tools/test_if_v_test_system_works.v
           ./cmd/tools/test_if_v_test_system_works
-      - name: All code is formatted
+      - name: Verify formatting
         run: ./v test-cleancode
       - name: Test pure V math module
         run: ./v -exclude @vlib/math/*.c.v test vlib/math/
@@ -142,7 +142,7 @@ jobs:
         run: ./v doc -v clipboard
       - name: Test v build-tools
         run: ./v -W build-tools
-      - name: All code is formatted
+      - name: Verify formatting
         run: ./v test-cleancode
       - name: Test pure V math module
         run: ./v -exclude @vlib/math/*.c.v test vlib/math/

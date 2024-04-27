@@ -3,12 +3,12 @@ name: Cross CI
 on:
   push:
     paths-ignore:
-      - "**.md"
+      - '**.md'
       - '**.yml'
       - '!**/cross_ci.yml'
   pull_request:
     paths-ignore:
-      - "**.md"
+      - '**.md'
       - '**.yml'
       - '!**/cross_ci.yml'
 
@@ -68,7 +68,7 @@ jobs:
       - name: Turn off the wine crash dialog
         run: winetricks nocrashdialog
 
-      - name: Build v
+      - name: Build V
         run: make
 
       - name: v.c can be compiled and run with -os cross

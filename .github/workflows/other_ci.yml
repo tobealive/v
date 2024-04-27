@@ -83,8 +83,8 @@ jobs:
           .github/workflows/retry.sh sudo apt install --quiet -y libfreetype6-dev libxi-dev libxcursor-dev libgl-dev xfonts-75dpi xfonts-base
           .github/workflows/retry.sh sudo apt install --quiet -y g++-9 g++-11
 
-      - name: Build v
-        run: make
+      - name: Build V
+        run: make -j4
 
       - name: g++-9 version
         run: g++-9 --version
