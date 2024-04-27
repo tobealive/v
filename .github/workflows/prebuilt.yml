@@ -5,6 +5,7 @@ on:
   release:
     types: [edited, published]
 
+# TODO: matrix
 jobs:
   ubuntu:
     runs-on: ubuntu-20.04

@@ -16,6 +16,9 @@ concurrency:
   group: ${{ github.workflow }}-${{ github.ref == 'refs/heads/master' && github.sha || github.ref }}
   cancel-in-progress: true
 
+env:
+  RETRY: $RETRY
+
 jobs:
   macos-cross:
     runs-on: macos-13
@@ -28,7 +31,7 @@ jobs:
           fetch-depth: 10
       - name: Install dependencies
         run: |
-          .github/workflows/retry.sh brew install mingw-w64
+          $RETRY brew install mingw-w64
           export LIBRARY_PATH="$LIBRARY_PATH:/usr/local/opt/openssl/lib/"
       - name: Build V
         run: make -j4
@@ -54,11 +57,11 @@ jobs:
           fetch-depth: 10
       - name: Install dependencies
         run: |
-          ## sudo dpkg --add-architecture i386
-          .github/workflows/retry.sh sudo apt -qq update
-          .github/workflows/retry.sh sudo apt -qq install libssl-dev sqlite3 libsqlite3-dev
-          .github/workflows/retry.sh sudo apt -qq install mingw-w64 wine-stable winetricks
-          ## .github/workflows/retry.sh sudo apt -qq install wine32
+          # sudo dpkg --add-architecture i386
+          $RETRY sudo apt -qq update
+          $RETRY sudo apt -qq install libssl-dev sqlite3 libsqlite3-dev
+          $RETRY sudo apt -qq install mingw-w64 wine-stable winetricks
+          # $RETRY sudo apt -qq install wine32
       - name: Turn off the wine crash dialog
         run: winetricks nocrashdialog
       - name: Build V
