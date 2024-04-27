@@ -215,7 +215,7 @@ jobs:
       - name: Install dependencies
         run: |
           v retry -- sudo apt update
-          v retry -- sudo apt install --quiet -y libgc-dev   libsodium-dev libssl-dev sqlite3 libsqlite3-dev libfreetype6-dev libxi-dev libxcursor-dev libgl-dev xfonts-75dpi xfonts-base
+          v retry -- sudo apt install --quiet -y libgc-dev libsodium-dev libssl-dev sqlite3 libsqlite3-dev libfreetype6-dev libxi-dev libxcursor-dev libgl-dev xfonts-75dpi xfonts-base
           v retry -- sudo apt install --quiet -y --no-install-recommends gfortran liblapacke-dev libopenblas-dev ## for vsl/vtl
           v retry -- sudo apt install --quiet -y --no-install-recommends libhdf5-cpp-103 libhdf5-dev libhdf5-mpi-dev hdf5-tools libopenmpi-dev opencl-headers liblapacke-dev libopenblas-dev ## needed by VSL
 

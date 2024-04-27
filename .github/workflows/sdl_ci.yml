@@ -30,9 +30,9 @@ jobs:
 
       - name: Install dependencies
         run: |
-          v retry 'sudo apt update'
-          v retry 'sudo apt install -y libsdl2-dev libsdl2-ttf-dev'
-          v retry 'sudo apt install -y libsdl2-mixer-dev libsdl2-image-dev'
+          v retry sudo apt update
+          v retry -- sudo apt install -y libsdl2-dev libsdl2-ttf-dev
+          v retry -- sudo apt install -y libsdl2-mixer-dev libsdl2-image-dev
 
       - name: Clone sdl into .vmodules
         run: |
@@ -58,8 +58,7 @@ jobs:
 
       - name: Check SDL works, when installed through vpm
         run: |
-          rm -rf sdl/
-          rm -rf ~/.vmodules/sdl
+          rm -rf sdl/ ~/.vmodules/sdl
           v retry 'v install sdl'
           ls -la ~/.vmodules/sdl/
           v ~/.vmodules/sdl/setup.vsh

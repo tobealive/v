@@ -7,7 +7,6 @@ on:
       - 0.**
 
 jobs:
-
   build-linux:
     runs-on: ubuntu-20.04
     env:
