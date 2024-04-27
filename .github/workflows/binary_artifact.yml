@@ -10,7 +10,6 @@ on:
     # tags:
     #   - weekly.**
     #   - 0.**
-  ##
 
 jobs:
   build-linux:
@@ -120,9 +119,10 @@ jobs:
         shell: msys2 {0}
         run: rm -rf .git/ thirdparty/tcc/.git/ vc/ v_old.exe vlib/v/tests/bench/gcboehm/*.svg
       - name: Create archive
+        shell: msys2 {0}
         run: |
           cd ..
-          powershell Compress-Archive v $ZIPNAME
+          7z a -tzip $ZIPNAME v
           mv $ZIPNAME v/
           cd v/
       - name: Create artifact
