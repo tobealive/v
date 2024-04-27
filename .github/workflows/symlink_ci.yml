@@ -1,0 +1,69 @@
+name: Symlink CI
+
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - 'cmd/tools/vsymlink.v'
+      - '.github/workflows/symlink_ci.yml'
+  pull_request:
+    paths:
+      - 'cmd/tools/vsymlink.v'
+      - '.github/workflows/symlink_ci.yml'
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref_name == 'master' && github.sha || github.ref_name }}
+  cancel-in-progress: true
+
+jobs:
+  symlink:
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: [ubuntu-20.04, macos-13, windows-2019]
+      fail-fast: false
+    steps:
+      - name: Checkout V
+        uses: actions/checkout@v4
+      - name: Build and symlink V
+        if: runner.os != 'Windows'
+        run: make -j4 && sudo ./v symlink
+      - name: Build and symlink V (Windows)
+        if: runner.os == 'Windows'
+        run: ./make.bat && ./v symlink
+      - name: Check if V is usable
+        run: |
+          pwd
+          v version
+          cd ~
+          pwd
+          v version
+          echo 'println(123)' > hi.v
+          v run hi.v
+
+  symlink-githubci:
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: [ubuntu-20.04, macos-13, windows-2019]
+      fail-fast: false
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build and symlink V
+        if: runner.os != 'Windows'
+        run: make -j4 && ./v symlink -githubci
+      - name: Build V (Windows)
+        if: runner.os == 'Windows'
+        run: |
+          ./make.bat && ./v symlink -githubci
+          Invoke-Command { & "pwsh.exe"       } -NoNewScope
+      - name: Check if V is usable
+        run: |
+          pwd
+          v version
+          cd ~
+          pwd
+          v version
+          echo 'println(123)' > hi.v
+          v run hi.v
+        # TODO: keep messages
