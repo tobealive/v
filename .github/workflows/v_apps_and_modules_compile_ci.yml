@@ -99,9 +99,9 @@ jobs:
         if: ${{ !cancelled() && steps.build.outcome == 'success' }}
         run: |
           echo "Clone Coreutils"
-          v retry -- git clone --depth 1 https://github.com/vlang/coreutils /tmp/coreutils
+          v retry -- git clone --depth 1 https://github.com/vlang/coreutils coreutils
           echo "Build Coreutils"
-          cd /tmp/coreutils; make
+          cd coreutils; make
 
       - name: Build vlang/gitly
         if: ${{ !cancelled() && steps.build.outcome == 'success' }}
@@ -126,8 +126,8 @@ jobs:
         if: ${{ !cancelled() && steps.build.outcome == 'success' }}
         run: |
           echo "Clone v-analyzer"
-          v retry -- git clone --depth=1 --filter=blob:none --recursive --shallow-submodules https://github.com/vlang/v-analyzer /tmp/v-analyzer
-          cd /tmp/v-analyzer
+          v retry -- git clone --depth=1 --recursive --shallow-submodules https://github.com/vlang/v-analyzer
+          cd v-analyzer
           echo "Installing dependencies"
           v install
           echo "Build v-analyzer debug"
@@ -138,7 +138,7 @@ jobs:
       - name: Format vlang/v-analyzer
         if: ${{ !cancelled() && steps.build.outcome == 'success' }}
         run: |
-          cd /tmp/v-analyzer
+          cd v-analyzer
           set +e
           v fmt -c .
           exit_code=$?
@@ -152,11 +152,11 @@ jobs:
         if: ${{ !cancelled() && steps.build.outcome == 'success' }}
         run: |
           echo "Clone Go2V"
-          v retry -- git clone --depth=1 https://github.com/vlang/go2v /tmp/go2v/
+          v retry -- git clone --depth=1 https://github.com/vlang/go2v
           echo "Build Go2V"
-          v /tmp/go2v/
+          v go2v
           echo "Run Go2V tests"
-          VJOBS=1 v test /tmp/go2v/
+          VJOBS=1 v test go2v
 
       - name: Install UI through VPM and make sure its examples compile
         if: ${{ !cancelled() && steps.build.outcome == 'success' }}
@@ -170,11 +170,11 @@ jobs:
         if: ${{ !cancelled() && steps.build.outcome == 'success' }}
         run: |
           echo "Clone the AdventOfCode repo"
-          v retry -- git clone --depth 1 https://github.com/vlang/adventofcode  /tmp/adventofcode
+          v retry -- git clone --depth 1 https://github.com/vlang/adventofcode
           echo "Install dependencies"
-          v retry -- v install pcre
+          v retry v install pcre
           echo "Execute Tests"
-          cd /tmp/adventofcode && v run verify.v
+          cd adventofcode && v run verify.v
 
       - name: Build vlang/msgpack
         if: ${{ !cancelled() && steps.build.outcome == 'success' }}
