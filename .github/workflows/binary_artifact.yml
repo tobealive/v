@@ -1,7 +1,12 @@
 name: Build binary artifacts
 
 on:
+  pull_request:
+    paths:
+      - '**/binary_artifact.yml'
   push:
+    paths:
+      - '**/binary_artifact.yml'
     tags:
       - weekly.**
       - 0.**
@@ -114,15 +119,11 @@ jobs:
         shell: msys2 {0}
         run: rm -rf .git/ thirdparty/tcc/.git/ vc/ v_old.exe vlib/v/tests/bench/gcboehm/*.svg
       - name: Create archive
-        shell: msys2 {0}
         run: |
           cd ..
           powershell Compress-Archive v $ZIPNAME
           mv $ZIPNAME v/
           cd v/
-      # NB: the powershell Compress-Archive line is from:
-      # https://superuser.com/a/1336434/194881
-      # It is needed, because `zip` is not installed by default :-|
       - name: Create artifact
         uses: actions/upload-artifact@v4
         with:
