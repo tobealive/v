@@ -162,12 +162,12 @@ jobs:
           .\v.exe self
       - name: Ensure code is well formatted
         run: v test-cleancode
-      # - name: Install dependencies
-      #   run: |
-      #     .\v.exe setup-freetype
-      #     .\.github\workflows\windows-install-sqlite.bat
-      # - name: Self tests (/fsanitize=address) # TODO:
-      #   run: .\v.exe -cflags "/fsanitize=address" test-self vlib
+      - name: Install dependencies
+        run: |
+          ./v.exe setup-freetype
+          ./.github\workflows\windows-install-sqlite.bat
+      - name: Self tests (/fsanitize=address)
+        run: ./v.exe -cflags "/fsanitize=address" test-self vlib
 
   tests-sanitize-address-gcc:
     runs-on: ubuntu-20.04
