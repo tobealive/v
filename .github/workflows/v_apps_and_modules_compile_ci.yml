@@ -29,9 +29,9 @@ jobs:
 
       - name: Install dependencies
         run: |
-          v retry -- sudo apt update
-          v retry -- sudo apt install --quiet -y libgc-dev libsodium-dev libssl-dev sqlite3 libsqlite3-dev libfreetype6-dev libxi-dev libxcursor-dev libgl-dev xfonts-75dpi xfonts-base
-          v retry -- sudo apt install --quiet -y --no-install-recommends sassc libgit2-dev ## needed by gitly
+          v retry -- sudo apt -qq update
+          v retry -- sudo apt -qq install libgl-dev libxcursor-dev libxi-dev xfonts-base \
+            sassc libgit2-dev ## needed by gitly
 
       - name: Test vtcc
         run: .github/workflows/compile_v_with_vtcc.sh

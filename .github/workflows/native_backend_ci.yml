@@ -56,9 +56,6 @@ jobs:
     runs-on: ${{ matrix.os }}
     steps:
       - uses: actions/checkout@v4
-      - name: Install linker
-        if: runner.os == 'Linux'
-        run: .github/workflows/retry.sh sudo apt -qq install binutils
       - name: Build V
         if: runner.os != 'Windows'
         run: make -j4 && ./v symlink -githubci

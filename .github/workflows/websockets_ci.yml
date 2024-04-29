@@ -28,9 +28,7 @@ jobs:
       VFLAGS: -cc tcc -no-retry-compilation
     steps:
       - uses: actions/checkout@v4
-      - name: Install dependencies
-        run: .github/workflows/retry.sh sudo apt install --quiet -y libssl-dev
-      - name: Build v
+      - name: Build V
         run: |
           echo $VFLAGS
           sudo ln -s $PWD/thirdparty/tcc/tcc.exe /usr/local/bin/tcc ## TODO: remove

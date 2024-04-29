@@ -81,14 +81,13 @@ jobs:
       VTEST_SHOW_START: 1
     steps:
       - uses: actions/checkout@v4
+      - name: Build V
+        run: make -j4 && ./v -cg -cstrict -o v cmd/v
       - name: Install dependencies
         run: |
-          .github/workflows/retry.sh sudo apt update
-          .github/workflows/retry.sh sudo apt install --quiet -y postgresql libpq-dev libssl-dev sqlite3 libsqlite3-dev valgrind
-          .github/workflows/retry.sh sudo apt install --quiet -y libfreetype6-dev  libxi-dev libxcursor-dev libgl-dev
-          .github/workflows/retry.sh sudo apt install clang
-      - name: Build V
-        run: make && ./v -cg -cstrict -o v cmd/v
+          ./v retry -- sudo apt -qq update
+          ./v retry -- sudo apt -qq install valgrind libxi-dev libxcursor-dev libgl-dev
+          sudo systemctl start postgresql.service
       - name: Ensure code is well formatted
         run: ./v test-cleancode
       - name: Self tests (-fsanitize=undefined)
@@ -105,13 +104,13 @@ jobs:
       VTEST_SHOW_START: 1
     steps:
       - uses: actions/checkout@v4
+      - name: Build V
+        run: make -j4 && ./v -cg -cstrict -o v cmd/v
       - name: Install dependencies
         run: |
-          .github/workflows/retry.sh sudo apt update
-          .github/workflows/retry.sh sudo apt install --quiet -y postgresql libpq-dev libssl-dev sqlite3 libsqlite3-dev valgrind
-          .github/workflows/retry.sh sudo apt install --quiet -y libfreetype6-dev  libxi-dev libxcursor-dev libgl-dev
-      - name: Build V
-        run: make && ./v -cg -cstrict -o v cmd/v
+          ./v retry -- sudo apt -qq update
+          ./v retry -- sudo apt -qq install valgrind libxi-dev libxcursor-dev libgl-dev
+          sudo systemctl start postgresql.service
       - name: Ensure code is well formatted
         run: ./v test-cleancode
       - name: Self tests (-fsanitize=undefined)
@@ -128,14 +127,13 @@ jobs:
       VTEST_SHOW_START: 1
     steps:
       - uses: actions/checkout@v4
+      - name: Build V
+        run: make -j4 && ./v -cg -cstrict -o v cmd/v
       - name: Install dependencies
         run: |
-          .github/workflows/retry.sh sudo apt update
-          .github/workflows/retry.sh sudo apt install --quiet -y postgresql libpq-dev libssl-dev sqlite3 libsqlite3-dev valgrind
-          .github/workflows/retry.sh sudo apt install --quiet -y libfreetype6-dev  libxi-dev libxcursor-dev libgl-dev
-          .github/workflows/retry.sh sudo apt install clang
-      - name: Build V
-        run: make && ./v -cg -cstrict -o v cmd/v
+          ./v retry -- sudo apt -qq update
+          ./v retry -- sudo apt -qq install valgrind libxi-dev libxcursor-dev libgl-dev
+          sudo systemctl start postgresql.service
       - name: Ensure code is well formatted
         run: ./v test-cleancode
       - name: Self tests (-fsanitize=address)
@@ -180,14 +178,13 @@ jobs:
       VTEST_SHOW_START: 1
     steps:
       - uses: actions/checkout@v4
+      - name: Build V
+        run: make -j4 && ./v -cg -cstrict -o v cmd/v
       - name: Install dependencies
         run: |
-          .github/workflows/retry.sh sudo apt update
-          .github/workflows/retry.sh sudo apt install --quiet -y postgresql libpq-dev libssl-dev sqlite3 libsqlite3-dev valgrind
-          .github/workflows/retry.sh sudo apt install --quiet -y libfreetype6-dev  libxi-dev libxcursor-dev libgl-dev
-          .github/workflows/retry.sh sudo apt install clang
-      - name: Build V
-        run: make && ./v -cg -cstrict -o v cmd/v
+          ./v retry -- sudo apt -qq update
+          ./v retry -- sudo apt -qq install valgrind libxi-dev libxcursor-dev libgl-dev
+          sudo systemctl start postgresql.service
       - name: Ensure code is well formatted
         run: ./v test-cleancode
       - name: Self tests (-fsanitize=address)
@@ -208,14 +205,13 @@ jobs:
       VTEST_SHOW_START: 1
     steps:
       - uses: actions/checkout@v4
+      - name: Build V
+        run: make -j4 && ./v -cc clang -cg -cstrict -o v cmd/v
       - name: Install dependencies
         run: |
-          .github/workflows/retry.sh sudo apt update
-          .github/workflows/retry.sh sudo apt install --quiet -y postgresql libpq-dev libssl-dev sqlite3 libsqlite3-dev valgrind
-          .github/workflows/retry.sh sudo apt install --quiet -y libfreetype6-dev  libxi-dev libxcursor-dev libgl-dev
-          .github/workflows/retry.sh sudo apt install clang
-      - name: Build V
-        run: make && ./v -cc clang -cg -cstrict -o v cmd/v
+          ./v retry -- sudo apt -qq update
+          ./v retry -- sudo apt -qq install valgrind libxi-dev libxcursor-dev libgl-dev
+          sudo systemctl start postgresql.service
       - name: Ensure code is well formatted
         run: ./v test-cleancode
       - name: Self tests (-fsanitize=memory)
