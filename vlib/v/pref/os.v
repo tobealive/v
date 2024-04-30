@@ -52,6 +52,7 @@ pub fn os_from_string(os_str string) !OS {
 		'js_freestanding' { .js_freestanding }
 		'js_browser' { .js_browser }
 		'solaris' { .solaris }
+		'qnx' { .qnx }
 		'serenity' { .serenity }
 		'plan9' { .plan9 }
 		'vinix' { .vinix }
