@@ -229,8 +229,6 @@ pub mut:
 	// wasm settings:
 	wasm_stack_top int = 1024 + (16 * 1024) // stack size for webassembly backend
 	wasm_validate  bool // validate webassembly code, by calling `wasm-validate`
-	// temp
-	// use_64_int bool
 }
 
 pub struct LineInfo {
@@ -312,8 +310,7 @@ pub fn parse_args_and_show_errors(known_external_commands []string, args []strin
 		res.skip_unused = true
 	} */
 
-	mut command := ''
-	mut command_pos := -1
+	mut command, mut command_idx := '', 0
 	for i := 0; i < args.len; i++ {
 		arg := args[i]
 		match arg {
@@ -373,10 +370,7 @@ pub fn parse_args_and_show_errors(known_external_commands []string, args []strin
 				res.is_help = true
 			}
 			'-q' {
-				if command == '' {
-					// -q flags after a command are for the command, not for V itself.
-					res.is_quiet = true
-				}
+				res.is_quiet = true
 			}
 			'-v', '-V', '--version', '-version' {
 				if command != '' {
@@ -394,9 +388,6 @@ pub fn parse_args_and_show_errors(known_external_commands []string, args []strin
 			'-progress' {
 				// processed by testing tools in cmd/tools/modules/testing/common.v
 			}
-			//'-i64' {
-			// res.use_64_int = true
-			//}
 			'-Wimpure-v' {
 				res.warn_impure_v = true
 			}
@@ -913,8 +904,7 @@ pub fn parse_args_and_show_errors(known_external_commands []string, args []strin
 			}
 			else {
 				if command == '' {
-					command = arg
-					command_pos = i
+					command, command_idx = arg, i
 					if res.is_eval_argument || command in ['run', 'crun', 'watch'] {
 						break
 					}
@@ -974,7 +964,7 @@ pub fn parse_args_and_show_errors(known_external_commands []string, args []strin
 		run_code_in_tmp_vfile_and_exit(args, mut res, '-e', 'vsh', res.eval_argument)
 	}
 
-	command_args := args[command_pos + 1..]
+	command_args := args[command_idx + 1..]
 	if res.is_run || res.is_crun {
 		res.path = command_args[0] or { eprintln_exit('v run: no v files listed') }
 		res.run_args = command_args[1..]
