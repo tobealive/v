@@ -306,17 +306,12 @@ pub fn parse_args_and_show_errors(known_external_commands []string, args []strin
 	if os.getenv('VNORUN') != '' {
 		res.skip_running = true
 	}
-	mut command := ''
-	mut command_pos := -1
-
-	/*
-	$if macos || linux {
+	/* $if macos || linux {
 		res.use_cache = true
 		res.skip_unused = true
-	}
-	*/
+	} */
 
-	// for i, arg in args {
+	mut command, mut command_idx := '', 0
 	for i := 0; i < args.len; i++ {
 		arg := args[i]
 		match arg {
@@ -376,21 +371,19 @@ pub fn parse_args_and_show_errors(known_external_commands []string, args []strin
 				res.is_help = true
 			}
 			'-q' {
-				if command_pos == -1 {
-					// a -q flag after a command is for the command, not for v
-					res.is_quiet = true
-				}
+				res.is_quiet = true
 			}
 			'-v', '-V', '--version', '-version' {
-				if command_pos == -1 {
+				if command != '' {
 					// Version flags after a command are intended for the command, not for V itself.
-					if args[i..].len > 1 && arg == '-v' {
-						// With additional args after the `-v` flag, it toggles verbosity, like Clang.
-						// E.g.: `v -v` VS `v -v run examples/hello_world.v`.
-						res.is_verbose = true
-					} else {
-						command = 'version'
-					}
+					continue
+				}
+				if args[i..].len > 1 && arg == '-v' {
+					// With additional args after the `-v` flag, it toggles verbosity, like Clang.
+					// E.g.: `v -v` VS `v -v run examples/hello_world.v`.
+					res.is_verbose = true
+				} else {
+					command = 'version'
 				}
 			}
 			'-progress' {
@@ -919,8 +912,7 @@ pub fn parse_args_and_show_errors(known_external_commands []string, args []strin
 				}
 				if !arg.starts_with('-') {
 					if command == '' {
-						command = arg
-						command_pos = i
+						command, command_idx = arg, i
 						if res.is_eval_argument || command in ['run', 'crun', 'watch'] {
 							break
 						}
@@ -950,25 +942,47 @@ pub fn parse_args_and_show_errors(known_external_commands []string, args []strin
 			fpattern = '*${fpattern}*'
 		}
 	}
-	if command == 'crun' {
-		res.is_crun = true
-	}
-	if command == 'run' {
-		res.is_run = true
-	}
-	if command == 'run' && res.is_prod && os.is_atty(1) > 0 {
-		eprintln_cond(show_output && !res.is_quiet, "Note: building an optimized binary takes much longer. It shouldn't be used with `v run`.")
-		eprintln_cond(show_output && !res.is_quiet, 'Use `v run` without optimization, or build an optimized binary with -prod first, then run it separately.')
-	}
 	if res.os in [.browser, .wasi] && res.backend != .wasm {
 		eprintln_exit('OS `${res.os}` forbidden for backends other than wasm')
 	}
 	if res.backend == .wasm && res.os !in [.browser, .wasi, ._auto] {
 		eprintln_exit('Native WebAssembly backend OS must be `browser` or `wasi`')
 	}
-
-	if command != 'doc' && res.out_name.ends_with('.v') {
-		eprintln_exit('Cannot save output binary in a .v file.')
+	command_args := args[command_idx + 1..]
+	match command {
+		'run' {
+			if res.is_prod && os.is_atty(1) > 0 {
+				eprintln_cond(show_output && !res.is_quiet, "Note: building an optimized binary takes much longer. It shouldn't be used with `v run`.")
+				eprintln_cond(show_output && !res.is_quiet, 'Use `v run` without optimization, or build an optimized binary with -prod first, then run it separately.')
+			}
+			res.is_run = true
+		}
+		'crun' {
+			res.is_crun = true
+		}
+		'build-module' {
+			res.path = command_args[0] or { eprintln_exit('v build-module: no module specified') }
+			res.build_mode = .build_module
+		}
+		'doc' {
+			if res.out_name.ends_with('.v') {
+				eprintln_exit('Cannot save output binary in a .v file.')
+			}
+		}
+		'interpret' {
+			res.backend = .interpret
+			res.path = command_args[0] or { eprintln_exit('v interpret: no v files listed') }
+			res.run_args = command_args[1..]
+			if res.path != '' {
+				must_exist(res.path)
+				if !res.path.ends_with('.v') && os.is_executable(res.path) && os.is_file(res.path)
+					&& os.is_file(res.path + '.v') {
+					eprintln_cond(show_output && !res.is_quiet, 'It looks like you wanted to run "${res.path}.v", so we went ahead and did that since "${res.path}" is an executable.')
+					res.path += '.v'
+				}
+			}
+		}
+		else {}
 	}
 	if res.fast_math {
 		if res.ccompiler_type == .msvc {
@@ -981,13 +995,12 @@ pub fn parse_args_and_show_errors(known_external_commands []string, args []strin
 		// `v -e "println(2+5)"`
 		run_code_in_tmp_vfile_and_exit(args, mut res, '-e', 'vsh', res.eval_argument)
 	}
-
+	if !res.is_bare && res.bare_builtin_dir != '' {
+		eprintln_cond(show_output && !res.is_quiet, '`-bare-builtin-dir` must be used with `-freestanding`')
+	}
 	if res.is_run || res.is_crun {
-		if command_pos + 2 > args.len {
-			eprintln_exit('v run: no v files listed')
-		}
-		res.path = args[command_pos + 1]
-		res.run_args = args[command_pos + 2..]
+		res.path = command_args[0] or { eprintln_exit('v run: no v files listed') }
+		res.run_args = command_args[1..]
 		if res.path == '-' {
 			// `echo "println(2+5)" | v -`
 			contents := os.get_raw_lines_joined()
@@ -1001,40 +1014,13 @@ pub fn parse_args_and_show_errors(known_external_commands []string, args []strin
 		}
 	} else if is_source_file(command) {
 		res.path = command
-	}
-	if !res.is_bare && res.bare_builtin_dir != '' {
-		eprintln_cond(show_output && !res.is_quiet, '`-bare-builtin-dir` must be used with `-freestanding`')
-	}
-	if command.ends_with('.vsh') || (res.raw_vsh_tmp_prefix != '' && !res.is_run) {
-		// `v build.vsh gcc` is the same as `v run build.vsh gcc`,
-		// i.e. compiling, then running the script, passing the args
-		// after it to the script:
-		res.is_crun = true
-		res.path = command
-		res.run_args = args[command_pos + 1..]
-	} else if command == 'interpret' {
-		res.backend = .interpret
-		if command_pos + 2 > args.len {
-			eprintln_exit('v interpret: no v files listed')
+		if command.ends_with('.vsh') || (res.raw_vsh_tmp_prefix != '' && !res.is_run) {
+			// `v build.vsh gcc` is the same as `v run build.vsh gcc`,
+			// i.e. compiling, then running the script, passing the args
+			// after it to the script:
+			res.is_crun = true
+			res.run_args = command_args
 		}
-		res.path = args[command_pos + 1]
-		res.run_args = args[command_pos + 2..]
-
-		if res.path != '' {
-			must_exist(res.path)
-			if !res.path.ends_with('.v') && os.is_executable(res.path) && os.is_file(res.path)
-				&& os.is_file(res.path + '.v') {
-				eprintln_cond(show_output && !res.is_quiet, 'It looks like you wanted to run "${res.path}.v", so we went ahead and did that since "${res.path}" is an executable.')
-				res.path += '.v'
-			}
-		}
-	}
-	if command == 'build-module' {
-		res.build_mode = .build_module
-		if command_pos + 1 >= args.len {
-			eprintln_exit('v build-module: no module specified')
-		}
-		res.path = args[command_pos + 1]
 	}
 	if res.ccompiler == 'musl-gcc' {
 		res.is_musl = true
