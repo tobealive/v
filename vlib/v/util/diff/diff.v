@@ -8,6 +8,7 @@ pub enum DiffTool {
 	diff // core package on Unix-like systems.
 	colordiff // `diff` wrapper.
 	delta // viewer for git and diff output.
+	diff_so_fancy // viewer for human-readable diffs.
 	// fc // built-in tool on windows. // TODO: enable when its command output can be read.
 }
 
@@ -30,6 +31,7 @@ const default_diff_args = $if openbsd || freebsd { '-d -a -U 2' } $else { '-d -a
 const known_diff_tool_defaults = {
 	// When searching for an automatically available diff tool, the tools are searched in this order.
 	DiffTool.delta: ''
+	.diff_so_fancy: ''
 	.colordiff:     default_diff_args
 	.diff:          default_diff_args
 	// .fc:        '/lnt'
@@ -66,7 +68,11 @@ pub fn compare_files(path1 string, path2 string, opts CompareOptions) !string {
 			}
 		}
 	}
-	return run_tool('${cmd} ${args} ${p1} ${p2}', @LOCATION)
+	args += ' ${p1} ${p2}'
+	if tool == .diff_so_fancy {
+		return run_tool('${DiffTool.diff.cmd()} -u ${args} | ${cmd}', @LOCATION)
+	}
+	return run_tool('${cmd} ${args}', @LOCATION)
 }
 
 // compare_text returns a string displaying the differences between two strings.
@@ -104,7 +110,7 @@ fn (opts CompareOptions) find_tool() !(DiffTool, string) {
 	} else {
 		opts.tool
 	}
-	cmd := $if windows { '${tool.str()}.exe' } $else { tool.str() }
+	cmd := tool.cmd()
 	if opts.tool == .auto {
 		// At this point it was already ensured that the automatically detected tool is available.
 		return tool, cmd
@@ -117,7 +123,7 @@ fn (opts CompareOptions) find_tool() !(DiffTool, string) {
 
 fn find_working_diff_tool() ?DiffTool {
 	for tool in diff.known_diff_tool_defaults.keys() {
-		cmd := $if windows { '${tool.str()}.exe' } $else { tool.str() }
+		cmd := tool.cmd()
 		os.find_abs_path_of_executable(cmd) or { continue }
 		if tool == .delta {
 			// Sanity check that the `delta` executable is actually the diff tool.
@@ -127,10 +133,18 @@ fn find_working_diff_tool() ?DiffTool {
 				dbg('delta does not appear to be the diff tool `${help_desc}`', @LOCATION)
 				continue
 			}
+		} else if tool == .diff_so_fancy {
+			// `diff-so-fancy` uses piped `diff` output. Ensure it is executable as well.
+			os.find_abs_path_of_executable(DiffTool.diff.cmd()) or { continue }
 		}
 		return tool
 	}
 	return none
+}
+
+fn (dt DiffTool) cmd() string {
+	cmd := if dt == .diff_so_fancy { 'diff-so-fancy' } else { dt.str() }
+	return $if windows { '${cmd}.exe' } $else { cmd }
 }
 
 fn run_tool(cmd string, dbg_location string) string {
