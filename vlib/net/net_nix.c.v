@@ -17,9 +17,6 @@ pub fn error_code() int {
 	return C.errno
 }
 
-fn init() {
-}
-
 pub const msg_nosignal = 0x4000
 pub const msg_dontwait = C.MSG_DONTWAIT
 
