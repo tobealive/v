@@ -534,41 +534,23 @@ struct ParseAuthorityRes {
 }
 
 fn parse_authority(authority string) !ParseAuthorityRes {
-	i := authority.index_u8_last(`@`)
-	mut host := ''
-	mut zuser := user('')
-	if i < 0 {
-		h := parse_host(authority)!
-		host = h
-	} else {
-		h := parse_host(authority[i + 1..])!
-		host = h
-	}
-	if i < 0 {
+	mut raw_user, raw_host := authority.rsplit_once('@') or {
 		return ParseAuthorityRes{
-			host: host
-			user: zuser
+			user: user('')
+			host: parse_host(authority)!
 		}
 	}
-	mut userinfo := authority[..i]
-	if !valid_userinfo(userinfo) {
+	if !valid_userinfo(raw_user) {
 		return error(error_msg('parse_authority: invalid userinfo', ''))
 	}
-	if !userinfo.contains(':') {
-		u := unescape(userinfo, .encode_user_password)!
-		userinfo = u
-		zuser = user(userinfo)
+	user_ := if usr, pwd := raw_user.split_once(':') {
+		user_password(unescape(usr, .encode_user_password)!, unescape(pwd, .encode_user_password)!)
 	} else {
-		mut username, mut password := split(userinfo, `:`, true)
-		u := unescape(username, .encode_user_password)!
-		username = u
-		p := unescape(password, .encode_user_password)!
-		password = p
-		zuser = user_password(username, password)
+		user(unescape(raw_user, .encode_user_password)!)
 	}
 	return ParseAuthorityRes{
-		user: zuser
-		host: host
+		user: user_
+		host: parse_host(raw_host)!
 	}
 }
 
